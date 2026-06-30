@@ -1,8 +1,71 @@
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Image, Lock } from 'lucide-react';
+import { Camera, Image, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { brand } from '../lib/brand.js';
+import { avatarSrc, uploadMyAvatar, errMessage } from '../lib/api.js';
+import { useToast } from '../hooks/useToast.jsx';
+
+function AvatarUpload({ userId }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [version, setVersion] = useState(0);
+  const { toast } = useToast();
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await uploadMyAvatar(file);
+      setVersion((v) => v + 1);
+      toast.ok('Profile photo updated.');
+    } catch (err) {
+      toast.err(errMessage(err, 'Could not upload photo.'));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  return (
+    <div className="welcome-avatar-wrap">
+      <div className="welcome-avatar-ring">
+        <img
+          key={version}
+          src={`${avatarSrc(userId)}?v=${version}`}
+          alt="Your profile photo"
+          className="welcome-avatar-img"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+        <div className="welcome-avatar-initials" aria-hidden="true">
+          <Camera style={{ width: 28, height: 28, opacity: 0.4 }} />
+        </div>
+      </div>
+
+      <motion.button
+        className="btn btn-ghost welcome-avatar-edit"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        title="Change profile photo"
+      >
+        <Camera className="ico" />
+        {uploading ? 'Uploading…' : 'Edit photo'}
+      </motion.button>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={handleFile}
+      />
+    </div>
+  );
+}
 
 export default function GuestWelcome() {
   const { user } = useAuth();
@@ -19,6 +82,8 @@ export default function GuestWelcome() {
         <div className="welcome-eyebrow">
           {brand.date} · {brand.first} &amp; {brand.second}
         </div>
+
+        {user?.id && <AvatarUpload userId={user.id} />}
 
         <h1 className="welcome-name">
           Welcome,<br />

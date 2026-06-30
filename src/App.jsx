@@ -14,6 +14,7 @@ import GuestLanding from './components/GuestLanding.jsx';
 import GuestWelcome from './components/GuestWelcome.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
 import UploaderPage from './components/UploaderPage.jsx';
+import QRValidate from './components/QRValidate.jsx';
 
 function AdminRoute({ status, isAdmin }) {
   if (status !== 'authed') return <Login />;
@@ -85,6 +86,12 @@ export default function App() {
       <Route
         path="/gallery/uploader/:uploaderId"
         element={status === 'authed' ? <UploaderPage /> : <Login />}
+      />
+
+      {/* QR entrance validation — admin scans a guest's QR code at the event door */}
+      <Route
+        path="/qr/validate/:guestId"
+        element={status === 'authed' && isAdmin ? <QRValidate /> : <Login />}
       />
 
       {/* Main gallery — any authenticated user (admin or guest) */}

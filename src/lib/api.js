@@ -54,3 +54,40 @@ export function errMessage(error, fallback = 'Something went wrong.') {
 export function isVideo(mimeType) {
   return (mimeType || '').startsWith('video/');
 }
+
+/** Build a URL for a user's avatar (requires auth header on requests). */
+export function avatarSrc(userId) {
+  return `${API_BASE}/users/${encodeURIComponent(userId)}/avatar`;
+}
+
+/** Upload the current user's own avatar. */
+export async function uploadMyAvatar(file) {
+  const form = new FormData();
+  form.append('file', file);
+  return api.post('/users/me/avatar', form);
+}
+
+/** Admin uploads an avatar for any user. */
+export async function uploadUserAvatar(userId, file) {
+  const form = new FormData();
+  form.append('file', file);
+  return api.patch(`/users/${encodeURIComponent(userId)}/avatar`, form);
+}
+
+/** Admin fetches guest info from their QR token (does not create a session). */
+export async function getGuestInfo(token) {
+  const { data } = await api.post('/auth/guest-info', { token });
+  return data;
+}
+
+/** Admin marks a guest as admitted at the event entrance. */
+export async function admitGuest(guestId) {
+  const { data } = await api.post(`/users/${encodeURIComponent(guestId)}/admit`);
+  return data;
+}
+
+/** Admin fetches the current admission status for a single guest. */
+export async function getGuestAdmission(guestId) {
+  const { data } = await api.get(`/users/${encodeURIComponent(guestId)}`);
+  return data;
+}
