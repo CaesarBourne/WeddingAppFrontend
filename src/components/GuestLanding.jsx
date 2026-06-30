@@ -4,19 +4,31 @@ import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { brand } from '../lib/brand.js';
-import { errMessage } from '../lib/api.js';
+import { errMessage, getGuestInfo } from '../lib/api.js';
 
 export default function GuestLanding() {
   const [params] = useSearchParams();
-  const { guestLogin, status } = useAuth();
+  const { guestLogin, status, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const tried = useRef(false);
 
   useEffect(() => {
-    // If already authenticated, skip straight to gallery.
     if (status === 'authed') {
-      navigate('/welcome', { replace: true });
+      const token = params.get('t');
+      // Admin scanning a guest QR → show entrance validation page.
+      if (isAdmin && token) {
+        getGuestInfo(token)
+          .then((data) =>
+            navigate(`/qr/validate/${data.id}`, {
+              state: { guestInfo: data },
+              replace: true,
+            }),
+          )
+          .catch(() => navigate('/', { replace: true }));
+      } else {
+        navigate('/welcome', { replace: true });
+      }
       return;
     }
 
@@ -33,7 +45,7 @@ export default function GuestLanding() {
     guestLogin(token)
       .then(() => navigate('/welcome', { replace: true }))
       .catch((err) => setError(errMessage(err, 'Could not sign in. Try scanning your QR code again.')));
-  }, [status, params, guestLogin, navigate]);
+  }, [status, params, guestLogin, navigate, isAdmin]);
 
   if (error) {
     return (

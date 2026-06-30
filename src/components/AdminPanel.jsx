@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode, Copy, Check, ToggleLeft, ToggleRight } from 'lucide-react';
+import { UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode, Copy, Check, ToggleLeft, ToggleRight, Camera, User } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext.jsx';
-import { api, errMessage, API_BASE } from '../lib/api.js';
+import { api, errMessage, API_BASE, avatarSrc, uploadUserAvatar } from '../lib/api.js';
 import { useToast } from '../hooks/useToast.jsx';
 import { brand } from '../lib/brand.js';
 
@@ -80,8 +80,71 @@ function QrCell({ token }) {
     </div>
   );
 }
+QrCell.propTypes = { token: PropTypes.string.isRequired };
 
-function UserRow({ user, onDelete, onToggleButton }) {
+function UserAvatar({ user, onUploaded }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [version, setVersion] = useState(0);
+  const { toast } = useToast();
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await uploadUserAvatar(user.id, file);
+      setVersion((v) => v + 1);
+      onUploaded?.();
+      toast.ok(`Avatar updated for ${user.name}.`);
+    } catch (err) {
+      toast.err(errMessage(err, 'Could not upload avatar.'));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  const initials = (user.name || '?').slice(0, 2).toUpperCase();
+
+  return (
+    <div className="user-avatar-wrap" title="Click to change photo">
+      <div
+        className={`user-avatar${uploading ? ' user-avatar--uploading' : ''}`}
+        onClick={() => !uploading && inputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+      >
+        {user.avatarUrl ? (
+          <img
+            key={version}
+            src={`${API_BASE}${user.avatarUrl}?v=${version}`}
+            alt={user.name}
+            className="user-avatar-img"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : null}
+        <span className="user-avatar-initials" aria-hidden="true">
+          {uploading ? <Loader2 className="ico spin-ico" /> : (user.avatarUrl ? <Camera style={{ width: 14, height: 14 }} /> : initials)}
+        </span>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={handleFile}
+      />
+    </div>
+  );
+}
+UserAvatar.propTypes = {
+  user: PropTypes.object.isRequired,
+  onUploaded: PropTypes.func,
+};
+
+function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
   const [deleting, setDeleting] = useState(false);
   const [toggling, setToggling] = useState(false);
   const { toast } = useToast();
@@ -117,11 +180,22 @@ function UserRow({ user, onDelete, onToggleButton }) {
   const ToggleIcon = user.buttonEnabled ? ToggleRight : ToggleLeft;
   const toggleIcon = toggling ? <Loader2 className="ico spin-ico" /> : <ToggleIcon className="ico" />;
 
+  const admissionChip = isGuest && user.admissionStatus === 'admitted' ? (
+    <span className="admission-chip admission-chip--admitted">Admitted</span>
+  ) : isGuest ? (
+    <span className="admission-chip admission-chip--pending">Pending</span>
+  ) : null;
+
   return (
     <div className="user-row">
+      <UserAvatar user={user} onUploaded={onAvatarUploaded} />
+
       <div className="user-info">
-        <span className="user-name">{user.name || '—'}</span>
-        <span className={`user-badge ${user.role}`}>{user.role}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span className="user-name">{user.name || '—'}</span>
+          <span className={`user-badge ${user.role}`}>{user.role}</span>
+          {admissionChip}
+        </div>
         {user.email && <span className="user-email">{user.email}</span>}
       </div>
 
@@ -162,11 +236,14 @@ const userShape = PropTypes.shape({
   role: PropTypes.string.isRequired,
   guestToken: PropTypes.string,
   buttonEnabled: PropTypes.bool,
+  admissionStatus: PropTypes.string,
+  avatarUrl: PropTypes.string,
 });
 UserRow.propTypes = {
   user: userShape.isRequired,
   onDelete: PropTypes.func.isRequired,
   onToggleButton: PropTypes.func.isRequired,
+  onAvatarUploaded: PropTypes.func,
 };
 
 export default function AdminPanel() {
@@ -193,14 +270,6 @@ export default function AdminPanel() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function removeFromList() {
-    reload();
-  }
-
-  function updateButtonEnabled() {
-    reload();
   }
 
   const guests = users.filter((u) => u.role === 'guest');
@@ -278,6 +347,7 @@ export default function AdminPanel() {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
         >
           <div className="admin-card-head">
+            <User className="ico" style={{ color: 'var(--gold)' }} />
             <h2>Guests ({guests.length})</h2>
           </div>
 
@@ -290,7 +360,13 @@ export default function AdminPanel() {
           ) : (
             <div className="user-list">
               {guests.map((u) => (
-                <UserRow key={u.id} user={u} onDelete={removeFromList} onToggleButton={updateButtonEnabled} />
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  onDelete={reload}
+                  onToggleButton={reload}
+                  onAvatarUploaded={reload}
+                />
               ))}
             </div>
           )}

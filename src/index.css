@@ -737,3 +737,351 @@ img { display: block; max-width: 100%; }
   margin: 0 auto;
   padding: 24px clamp(16px, 4vw, 40px) 80px;
 }
+
+/* ─── GuestWelcome — avatar ───────────────────────────────────────────────── */
+.welcome-avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.welcome-avatar-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 4px var(--gold-soft);
+  overflow: hidden;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.welcome-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+}
+
+.welcome-avatar-edit {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  gap: 4px;
+  color: var(--muted);
+}
+
+/* ─── AdminPanel — user avatar ────────────────────────────────────────────── */
+.user-avatar-wrap { position: relative; flex-shrink: 0; }
+
+.user-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface-2);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.user-avatar:hover { border-color: var(--gold); }
+
+.user-avatar--uploading { opacity: 0.6; cursor: wait; }
+
+.user-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.user-avatar-initials {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* show camera hover overlay */
+.user-avatar:hover .user-avatar-initials { color: var(--gold); }
+
+/* admission status chips */
+.admission-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.admission-chip--pending {
+  background: rgba(234, 179, 8, 0.15);
+  color: var(--ink);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+}
+
+.admission-chip--admitted {
+  background: rgba(157, 190, 142, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(157, 190, 142, 0.3);
+}
+
+/* ─── QR Validate page ────────────────────────────────────────────────────── */
+.qrv-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--wall);
+}
+
+.qrv-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--header-h);
+  padding: 0 clamp(16px, 4vw, 32px);
+  background: color-mix(in srgb, var(--wall) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(120%);
+  border-bottom: 1px solid var(--line);
+}
+
+.qrv-header-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.qrv-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px clamp(16px, 4vw, 40px) 64px;
+}
+
+.qrv-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 40px 32px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Colored ring ── */
+.qrv-ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  padding: 6px;
+  flex-shrink: 0;
+  transition: box-shadow 0.5s ease;
+}
+
+/* Yellow — pending */
+.qrv-ring--pending {
+  border: 5px solid #eab308;
+  box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4);
+  animation: ring-pulse-yellow 2s ease-in-out infinite;
+}
+
+/* Green — just admitted */
+.qrv-ring--just_admitted {
+  border: 5px solid var(--green);
+  box-shadow: 0 0 24px 6px rgba(157, 190, 142, 0.4);
+  animation: ring-pulse-green 1.8s ease-in-out infinite;
+}
+
+/* Red — already admitted */
+.qrv-ring--already_admitted {
+  border: 5px solid var(--rose);
+  box-shadow: 0 0 0 0 rgba(215, 141, 132, 0);
+}
+
+/* Loading — neutral */
+.qrv-ring--loading {
+  border: 5px solid var(--surface-3);
+}
+
+@keyframes ring-pulse-yellow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.5); }
+  50%       { box-shadow: 0 0 0 14px rgba(234, 179, 8, 0); }
+}
+
+@keyframes ring-pulse-green {
+  0%, 100% { box-shadow: 0 0 16px 2px rgba(157, 190, 142, 0.35); }
+  50%       { box-shadow: 0 0 32px 8px rgba(157, 190, 142, 0.15); }
+}
+
+.qrv-avatar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrv-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qrv-avatar-initials {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+  z-index: 1;
+}
+
+/* Overlay (check / X) that appears on the avatar */
+.qrv-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.qrv-overlay--green {
+  background: rgba(30, 46, 25, 0.78);
+  color: var(--green);
+}
+
+.qrv-overlay--red {
+  background: rgba(46, 25, 25, 0.78);
+  color: var(--rose);
+}
+
+/* Name */
+.qrv-name {
+  font-family: var(--display);
+  font-size: 1.9rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* Status panels */
+.qrv-status {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.qrv-status-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.qrv-status-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.qrv-status-body strong { font-weight: 600; }
+.qrv-status-body span { color: var(--muted); }
+
+.qrv-status--pending {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: rgba(234, 179, 8, 0.35);
+  color: var(--ink);
+}
+
+.qrv-status--admitted {
+  background: rgba(157, 190, 142, 0.1);
+  border-color: rgba(157, 190, 142, 0.3);
+  color: var(--green);
+}
+
+.qrv-status--denied {
+  background: var(--rose-soft);
+  border-color: rgba(215, 141, 132, 0.3);
+  color: var(--rose);
+}
+
+/* Admit button */
+.btn-admit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  border: 2px solid var(--green);
+  background: rgba(157, 190, 142, 0.12);
+  color: var(--green);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-admit:hover:not(:disabled) {
+  background: rgba(157, 190, 142, 0.22);
+  box-shadow: 0 0 0 4px rgba(157, 190, 142, 0.12);
+}
+
+.btn-admit:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
