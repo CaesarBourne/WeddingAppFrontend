@@ -16,7 +16,7 @@ export default function GuestLanding() {
   useEffect(() => {
     // If already authenticated, skip straight to gallery.
     if (status === 'authed') {
-      navigate('/', { replace: true });
+      navigate('/welcome', { replace: true });
       return;
     }
 
@@ -31,7 +31,7 @@ export default function GuestLanding() {
     tried.current = true;
 
     guestLogin(token)
-      .then(() => navigate('/', { replace: true }))
+      .then(() => navigate('/welcome', { replace: true }))
       .catch((err) => setError(errMessage(err, 'Could not sign in. Try scanning your QR code again.')));
   }, [status, params, guestLogin, navigate]);
 

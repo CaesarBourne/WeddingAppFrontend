@@ -48,7 +48,11 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  scrollbar-color: var(--surface-3) transparent;
+  scrollbar-width: thin;
+}
 
 html, body, #root { height: 100%; }
 
@@ -74,7 +78,6 @@ img { display: block; max-width: 100%; }
 ::selection { background: var(--gold-soft); }
 
 /* scrollbar — keep it in the palette */
-* { scrollbar-color: var(--surface-3) transparent; scrollbar-width: thin; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 99px; border: 3px solid var(--wall); }
 
@@ -489,9 +492,248 @@ img { display: block; max-width: 100%; }
 .qr-btn { padding: 5px 10px; font-size: 0.77rem; border-radius: 99px; gap: 5px; }
 .qr-btn .ico { width: 13px; height: 13px; }
 
+/* user row actions (toggle + delete) */
+.user-row-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+.toggle-btn { gap: 5px; font-size: 0.77rem; padding: 5px 10px; border-radius: 99px; }
+.toggle-btn .ico { width: 16px; height: 16px; color: var(--faint); }
+.toggle-btn-on { border-color: rgba(157,190,142,0.4); color: var(--green); }
+.toggle-btn-on .ico { color: var(--green); }
+
 @media (max-width: 600px) {
   .user-row { gap: 12px; }
   .qr-canvas { width: 100px !important; height: 100px !important; }
   .create-guest-form { flex-direction: column; }
   .create-guest-form .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------------------------------------------------------------- grouped gallery */
+.photo-group {
+  max-width: var(--maxw);
+  margin: 0 auto 56px;
+  padding: 0 clamp(16px, 4vw, 40px);
+}
+
+.photo-group-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.photo-group-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  display: grid; place-items: center;
+  flex: none;
+}
+.photo-group-avatar .ico { width: 20px; height: 20px; color: var(--faint); }
+
+.photo-group-meta { min-width: 0; }
+.photo-group-name {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.photo-group-stats {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 3px;
+  display: block;
+}
+.photo-group-time { color: var(--faint); }
+
+/* ---------------------------------------------------------------- guest welcome page */
+.welcome-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(900px 600px at 60% 20%, rgba(226, 187, 126, 0.09), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(215, 141, 132, 0.07), transparent 55%),
+    var(--wall);
+}
+
+.welcome-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: clamp(32px, 6vw, 52px) clamp(28px, 5vw, 44px);
+  text-align: center;
+}
+
+.welcome-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.welcome-name {
+  font-family: var(--display);
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0 0 16px;
+}
+.welcome-name-highlight {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.welcome-hint {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  max-width: 34ch;
+  margin: 0 auto 32px;
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-welcome {
+  width: 100%;
+  justify-content: center;
+  padding: 14px 20px;
+  font-size: 0.96rem;
+  border-radius: var(--r-md);
+}
+
+.btn-welcome-secondary {
+  border-color: var(--line-strong);
+  color: var(--muted);
+}
+.btn-welcome-secondary:not(:disabled):hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.btn-welcome-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.welcome-coming-soon {
+  margin: 20px 0 0;
+  font-size: 0.78rem;
+  color: var(--faint);
+  line-height: 1.55;
+}
+
+/* ---------------------------------------------------------------- photo preview row (3-col per group) */
+.photo-row {
+  display: grid;
+  gap: 8px;
+  /* gridTemplateColumns is set inline: repeat(N, 1fr) where N = min(photos, 3) */
+}
+
+.photo-row .tile {
+  margin: 0;
+  height: 220px;
+}
+
+.photo-row .tile-img,
+.photo-row video.tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .photo-row .tile { height: 160px; }
+}
+
+/* ---------------------------------------------------------------- see-more button */
+.btn-see-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 22px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  background: transparent;
+  border-radius: 99px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  font-family: var(--ui);
+  animation: see-more-pulse 2.8s ease-in-out infinite;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.btn-see-more:hover {
+  background: var(--gold-soft);
+}
+.btn-see-more .ico { width: 15px; height: 15px; }
+
+@keyframes see-more-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 187, 126, 0); }
+  50%       { box-shadow: 0 0 0 5px rgba(226, 187, 126, 0.18); }
+}
+
+/* ---------------------------------------------------------------- uploader full-gallery page */
+.uploader-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.uploader-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--header-h);
+  padding: 0 clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--wall) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(120%);
+  border-bottom: 1px solid var(--line);
+}
+
+.uploader-page-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.uploader-page-name {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uploader-page-count {
+  font-size: 0.75rem;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+}
+
+.uploader-page-main {
+  flex: 1;
+  max-width: var(--maxw);
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 40px) 80px;
 }

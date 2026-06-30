@@ -1,16 +1,91 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Play, ImageOff } from 'lucide-react';
 import { rawSrc, isVideo } from '../lib/api.js';
 
-export default function PhotoTile({ photo, index, onOpen }) {
+const MAX_RETRIES = 4;
+const RETRY_DELAY_MS = 4000;
+
+export default function PhotoTile({ photo, index, onOpen, compact = false }) {
   const reduce = useReducedMotion();
-  const [failed, setFailed] = useState(false);
+  const [retries, setRetries] = useState(0);
+  const timerRef = useRef(null);
   const video = isVideo(photo.mimeType);
 
-  // Reserve aspect-ratio space so the masonry doesn't reflow as images load.
+  const failed = retries > MAX_RETRIES;
+
+  function handleError() {
+    if (retries < MAX_RETRIES) {
+      timerRef.current = setTimeout(
+        () => setRetries((r) => r + 1),
+        RETRY_DELAY_MS,
+      );
+    } else {
+      setRetries(MAX_RETRIES + 1);
+    }
+  }
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
   const ratio =
     photo.width && photo.height ? photo.width / photo.height : 4 / 3;
+
+  // compact=true fills the parent container; default preserves aspect ratio.
+  const containerStyle = compact
+    ? { width: '100%', height: '100%' }
+    : { aspectRatio: ratio };
+  const mediaStyle = compact
+    ? { width: '100%', height: '100%', objectFit: 'cover' }
+    : { aspectRatio: ratio };
+
+  const cacheBust = retries > 0 ? `&r=${retries}` : '';
+  const imgSrc = rawSrc(photo.id, 'w700') + cacheBust;
+  const videoSrc = rawSrc(photo.id, 'download') + cacheBust;
+
+  let media;
+  if (failed) {
+    media = (
+      <div
+        style={{
+          ...containerStyle,
+          display: 'grid',
+          placeItems: 'center',
+          color: 'var(--faint)',
+          gap: 6,
+        }}
+      >
+        <ImageOff style={{ width: 22, height: 22 }} />
+      </div>
+    );
+  } else if (video) {
+    media = (
+      <video
+        key={retries}
+        className="tile-img"
+        src={videoSrc}
+        poster={rawSrc(photo.id, 'w700')}
+        preload="none"
+        muted
+        playsInline
+        style={mediaStyle}
+        onError={handleError}
+      />
+    );
+  } else {
+    media = (
+      <img
+        key={retries}
+        className="tile-img"
+        src={imgSrc}
+        alt={photo.description || photo.filename || 'Wedding photograph'}
+        loading="lazy"
+        decoding="async"
+        style={mediaStyle}
+        onError={handleError}
+      />
+    );
+  }
 
   return (
     <motion.figure
@@ -30,29 +105,7 @@ export default function PhotoTile({ photo, index, onOpen }) {
       viewport={{ once: true, margin: '120px' }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: (index % 4) * 0.04 }}
     >
-      {failed ? (
-        <div
-          style={{
-            aspectRatio: ratio,
-            display: 'grid',
-            placeItems: 'center',
-            color: 'var(--faint)',
-            gap: 6,
-          }}
-        >
-          <ImageOff style={{ width: 22, height: 22 }} />
-        </div>
-      ) : (
-        <img
-          className="tile-img"
-          src={rawSrc(photo.id, 'w700')}
-          alt={photo.description || photo.filename || 'Wedding photograph'}
-          loading="lazy"
-          decoding="async"
-          style={{ aspectRatio: ratio }}
-          onError={() => setFailed(true)}
-        />
-      )}
+      {media}
 
       <span className="tile-frame" aria-hidden="true" />
 
@@ -68,3 +121,10 @@ export default function PhotoTile({ photo, index, onOpen }) {
     </motion.figure>
   );
 }
+
+PhotoTile.propTypes = {
+  photo: PropTypes.object.isRequired,
+  index: PropTypes.number.isRequired,
+  onOpen: PropTypes.func.isRequired,
+  compact: PropTypes.bool,
+};

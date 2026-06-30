@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode, Copy, Check } from 'lucide-react';
+import { UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode, Copy, Check, ToggleLeft, ToggleRight } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api, errMessage, API_BASE } from '../lib/api.js';
@@ -80,8 +81,9 @@ function QrCell({ token }) {
   );
 }
 
-function UserRow({ user, onDelete }) {
+function UserRow({ user, onDelete, onToggleButton }) {
   const [deleting, setDeleting] = useState(false);
+  const [toggling, setToggling] = useState(false);
   const { toast } = useToast();
 
   async function handleDelete() {
@@ -97,7 +99,23 @@ function UserRow({ user, onDelete }) {
     }
   }
 
+  async function handleToggleButton() {
+    setToggling(true);
+    const next = !user.buttonEnabled;
+    try {
+      await api.patch(`/users/guests/${user.id}/button`, { enabled: next });
+      onToggleButton(user.id, next);
+      toast.ok(`Second button ${next ? 'enabled' : 'disabled'} for ${user.name}.`);
+    } catch (err) {
+      toast.err(errMessage(err, 'Could not update guest.'));
+    } finally {
+      setToggling(false);
+    }
+  }
+
   const isGuest = user.role === 'guest';
+  const ToggleIcon = user.buttonEnabled ? ToggleRight : ToggleLeft;
+  const toggleIcon = toggling ? <Loader2 className="ico spin-ico" /> : <ToggleIcon className="ico" />;
 
   return (
     <div className="user-row">
@@ -112,18 +130,44 @@ function UserRow({ user, onDelete }) {
       )}
 
       {isGuest && (
-        <button
-          className="btn btn-ghost btn-icon btn-danger"
-          onClick={handleDelete}
-          disabled={deleting}
-          title="Remove guest"
-        >
-          {deleting ? <Loader2 className="ico spin-ico" /> : <Trash2 className="ico" />}
-        </button>
+        <div className="user-row-actions">
+          <button
+            className={`btn btn-ghost qr-btn toggle-btn${user.buttonEnabled ? ' toggle-btn-on' : ''}`}
+            onClick={handleToggleButton}
+            disabled={toggling}
+            title={user.buttonEnabled ? "Disable guest's second button" : "Enable guest's second button"}
+          >
+            {toggleIcon}
+            {user.buttonEnabled ? 'Button on' : 'Button off'}
+          </button>
+
+          <button
+            className="btn btn-ghost btn-icon btn-danger"
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Remove guest"
+          >
+            {deleting ? <Loader2 className="ico spin-ico" /> : <Trash2 className="ico" />}
+          </button>
+        </div>
       )}
     </div>
   );
 }
+
+const userShape = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string,
+  email: PropTypes.string,
+  role: PropTypes.string.isRequired,
+  guestToken: PropTypes.string,
+  buttonEnabled: PropTypes.bool,
+});
+UserRow.propTypes = {
+  user: userShape.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onToggleButton: PropTypes.func.isRequired,
+};
 
 export default function AdminPanel() {
   const { logout } = useAuth();
@@ -151,7 +195,11 @@ export default function AdminPanel() {
     }
   }
 
-  function removeFromList(id) {
+  function removeFromList() {
+    reload();
+  }
+
+  function updateButtonEnabled() {
     reload();
   }
 
@@ -242,7 +290,7 @@ export default function AdminPanel() {
           ) : (
             <div className="user-list">
               {guests.map((u) => (
-                <UserRow key={u.id} user={u} onDelete={removeFromList} />
+                <UserRow key={u.id} user={u} onDelete={removeFromList} onToggleButton={updateButtonEnabled} />
               ))}
             </div>
           )}
@@ -261,7 +309,7 @@ export default function AdminPanel() {
             </div>
             <div className="user-list">
               {admins.map((u) => (
-                <UserRow key={u.id} user={u} onDelete={() => {}} />
+                <UserRow key={u.id} user={u} onDelete={() => {}} onToggleButton={() => {}} />
               ))}
             </div>
           </motion.section>

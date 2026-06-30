@@ -28,7 +28,9 @@ export function AuthProvider({ children }) {
       .get('/auth/me')
       .then(({ data }) => {
         if (!alive) return;
-        setUser(data);
+        // /auth/me returns { sub, ... } — normalise to { id, ... } so
+        // components can always use user.id regardless of how auth happened.
+        setUser({ ...data, id: data.sub });
         setStatus('authed');
       })
       .catch(() => alive && logout());

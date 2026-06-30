@@ -1,25 +1,107 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
-import { ImagePlus, AlertCircle, RotateCw } from 'lucide-react';
+import { ImagePlus, Images, RotateCw, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { usePhotos } from '../lib/queries.js';
 import { errMessage } from '../lib/api.js';
 import { brand } from '../lib/brand.js';
+import { timeAgo } from '../lib/timeAgo.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import PhotoTile from './PhotoTile.jsx';
 import Lightbox from './Lightbox.jsx';
 
-function Skeletons({ count = 8 }) {
-  // Varied heights so the loading state reads like a real masonry wall.
-  const heights = [220, 300, 180, 260, 340, 200, 280, 240];
+const SKELETON_HEIGHTS = [220, 300, 180, 260, 340, 200];
+
+function Skeletons({ count = 6 }) {
   return (
     <div className="masonry" aria-hidden="true">
-      {Array.from({ length: count }).map((_, i) => (
-        <div className="sk" key={i} style={{ height: heights[i % heights.length] }} />
+      {SKELETON_HEIGHTS.slice(0, count).map((h) => (
+        <div className="sk" key={h} style={{ height: h }} />
       ))}
     </div>
   );
 }
+Skeletons.propTypes = { count: PropTypes.number };
+
+const groupShape = PropTypes.shape({
+  uploaderId: PropTypes.string,
+  uploaderName: PropTypes.string.isRequired,
+  photos: PropTypes.array.isRequired,
+  lastUploadedAt: PropTypes.string,
+});
+
+function UploaderGroup({ group, onOpen, delay }) {
+  const navigate = useNavigate();
+  const preview = group.photos.slice(0, 3);
+  const extra = group.photos.length - 3;
+
+  return (
+    <motion.section
+      className="photo-group"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay }}
+    >
+      <div className="photo-group-head">
+        <div className="photo-group-avatar">
+          <User className="ico" />
+        </div>
+        <div className="photo-group-meta">
+          <span className="photo-group-name">{group.uploaderName}</span>
+          <span className="photo-group-stats">
+            {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
+            {group.lastUploadedAt && (
+              <span className="photo-group-time"> · {timeAgo(group.lastUploadedAt)}</span>
+            )}
+          </span>
+        </div>
+      </div>
+
+      <div
+        className="photo-row"
+        style={{ gridTemplateColumns: `repeat(${preview.length}, 1fr)` }}
+      >
+        {preview.map((photo, i) => (
+          <PhotoTile
+            key={photo.id}
+            photo={photo}
+            index={i}
+            onOpen={() => onOpen({ photos: group.photos, index: i })}
+            compact
+          />
+        ))}
+      </div>
+
+      {extra > 0 && (
+        <motion.button
+          className="btn-see-more"
+          onClick={() =>
+            navigate(`/gallery/uploader/${group.uploaderId ?? '_uncredited_'}`, {
+              state: { uploaderName: group.uploaderName },
+            })
+          }
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: delay + 0.15 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <Images className="ico" />
+          See {extra} more {extra === 1 ? 'photo' : 'photos'}
+        </motion.button>
+      )}
+    </motion.section>
+  );
+}
+UploaderGroup.propTypes = {
+  group: groupShape.isRequired,
+  onOpen: PropTypes.func.isRequired,
+  delay: PropTypes.number,
+};
 
 export default function Gallery({ onTotal, onUpload }) {
+  const { user, isAdmin } = useAuth();
   const {
     data,
     error,
@@ -44,7 +126,6 @@ export default function Gallery({ onTotal, onUpload }) {
     if (typeof total === 'number') onTotal?.(total);
   }, [total, onTotal]);
 
-  // Infinite scroll: load the next page when the sentinel nears the viewport.
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasNextPage) return;
@@ -58,10 +139,55 @@ export default function Gallery({ onTotal, onUpload }) {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Group all loaded photos by uploader, sorted most-recently-active first.
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const photo of photos) {
+      const key = photo.uploaderId ?? '__uncredited__';
+      if (!map.has(key)) {
+        map.set(key, {
+          uploaderId: photo.uploaderId,
+          uploaderName: photo.uploaderName ?? 'Wedding Album',
+          photos: [],
+          lastUploadedAt: null,
+        });
+      }
+      const g = map.get(key);
+      g.photos.push(photo);
+      if (
+        photo.uploadedAt &&
+        (!g.lastUploadedAt || new Date(photo.uploadedAt) > new Date(g.lastUploadedAt))
+      ) {
+        g.lastUploadedAt = photo.uploadedAt;
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (!a.lastUploadedAt && !b.lastUploadedAt) return 0;
+      if (!a.lastUploadedAt) return 1;
+      if (!b.lastUploadedAt) return -1;
+      return new Date(b.lastUploadedAt) - new Date(a.lastUploadedAt);
+    });
+  }, [photos]);
+
+  // Guests see only their own group; admins see every group.
+  const visibleGroups = useMemo(
+    () => (isAdmin ? groups : groups.filter((g) => g.uploaderId === user?.id)),
+    [groups, isAdmin, user],
+  );
+
   if (isLoading) {
     return (
       <div className="gallery-wrap">
-        <Skeletons />
+        <div className="photo-group">
+          <div className="photo-group-head">
+            <div className="photo-group-avatar sk" style={{ background: 'var(--surface-3)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="sk" style={{ width: 120, height: 16, borderRadius: 4 }} />
+              <div className="sk" style={{ width: 80, height: 12, borderRadius: 4 }} />
+            </div>
+          </div>
+          <Skeletons />
+        </div>
       </div>
     );
   }
@@ -79,12 +205,16 @@ export default function Gallery({ onTotal, onUpload }) {
     );
   }
 
-  if (photos.length === 0) {
+  if (visibleGroups.length === 0 && !hasNextPage) {
     return (
       <div className="state">
         <div className="mark" aria-hidden="true">&amp;</div>
-        <h2>The album is empty</h2>
-        <p>No photographs yet. The first upload starts the collection — go ahead.</p>
+        <h2>{isAdmin ? 'The album is empty' : 'No photos yet'}</h2>
+        <p>
+          {isAdmin
+            ? 'No photographs yet. The first upload starts the collection — go ahead.'
+            : "You haven't added any photos yet. Tap the button above to share your first one."}
+        </p>
         <button className="btn btn-gold" onClick={onUpload}>
           <ImagePlus className="ico" /> Add the first photo
         </button>
@@ -95,11 +225,14 @@ export default function Gallery({ onTotal, onUpload }) {
   return (
     <>
       <div className="gallery-wrap">
-        <div className="masonry">
-          {photos.map((photo, i) => (
-            <PhotoTile key={photo.id} photo={photo} index={i} onOpen={setLightbox} />
-          ))}
-        </div>
+        {visibleGroups.map((group, i) => (
+          <UploaderGroup
+            key={group.uploaderId ?? '__uncredited__'}
+            group={group}
+            onOpen={setLightbox}
+            delay={i * 0.06}
+          />
+        ))}
 
         <div ref={sentinelRef} className="sentinel" />
 
@@ -115,15 +248,21 @@ export default function Gallery({ onTotal, onUpload }) {
         )}
       </div>
 
-      <Lightbox
-        photos={photos}
-        index={lightbox}
-        onClose={() => setLightbox(null)}
-        onNavigate={setLightbox}
-      />
+      {lightbox && (
+        <Lightbox
+          photos={lightbox.photos}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onNavigate={(idx) => setLightbox((prev) => ({ ...prev, index: idx }))}
+        />
+      )}
     </>
   );
 }
+Gallery.propTypes = {
+  onTotal: PropTypes.func,
+  onUpload: PropTypes.func,
+};
 
 export function Masthead() {
   return (

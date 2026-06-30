@@ -11,7 +11,9 @@ import Gallery, { Masthead } from './components/Gallery.jsx';
 import UploadPanel from './components/UploadPanel.jsx';
 import Login from './components/Login.jsx';
 import GuestLanding from './components/GuestLanding.jsx';
+import GuestWelcome from './components/GuestWelcome.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
+import UploaderPage from './components/UploaderPage.jsx';
 
 function AdminRoute({ status, isAdmin }) {
   if (status !== 'authed') return <Login />;
@@ -70,8 +72,20 @@ export default function App() {
       {/* Public: guests scan their QR code and land here to auto-authenticate */}
       <Route path="/guest" element={<GuestLanding />} />
 
+      {/* Guest welcome page — shown after QR auth, requires an active session */}
+      <Route
+        path="/welcome"
+        element={status === 'authed' ? <GuestWelcome /> : <GuestLanding />}
+      />
+
       {/* Admin panel — requires an admin/super_admin session */}
       <Route path="/admin" element={<AdminRoute status={status} isAdmin={isAdmin} />} />
+
+      {/* Per-uploader full gallery — navigated to from "See more" on the main gallery */}
+      <Route
+        path="/gallery/uploader/:uploaderId"
+        element={status === 'authed' ? <UploaderPage /> : <Login />}
+      />
 
       {/* Main gallery — any authenticated user (admin or guest) */}
       <Route

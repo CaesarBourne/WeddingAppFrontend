@@ -86,21 +86,97 @@ npm run preview   # serve the production build locally
 
 ```
 src/
-  main.jsx                 providers: QueryClient, Auth, Toast
-  App.jsx                  auth gate + layout
+  main.jsx                 providers: QueryClient, Auth, Toast, BrowserRouter
+  App.jsx                  auth gate + routing (/, /guest, /admin)
   index.css                design tokens + every component style
   lib/
     api.js                 axios client, token store, rawSrc(), error formatting
     queries.js             usePhotos (infinite), useUpload, useRefresh
     brand.js               names/date/tagline from env
-  context/AuthContext.jsx  login, session validation, 401 handling
+  context/AuthContext.jsx  login, guestLogin, isAdmin, session validation, 401 handling
   hooks/useToast.jsx       toast context
   components/
-    Header.jsx             wordmark, count, add/refresh/sign-out
+    Header.jsx             wordmark, count, add/refresh/sign-out, admin nav button
     Gallery.jsx            masonry, infinite scroll, states, + Masthead
     PhotoTile.jsx          lazy image, hover caption, reveal
     Lightbox.jsx           full-screen viewer, keyboard nav, download
     UploadPanel.jsx        drag-drop, progress, bulk + failure reporting
     Login.jsx              sign-in
     Toasts.jsx             notifications
+    GuestLanding.jsx       auto-auth from QR URL (/guest?t=TOKEN)
+    AdminPanel.jsx         create/list/delete guests, QR code display & download
 ```
+
+---
+
+## Guest user system
+
+### What it does
+
+Admins can invite guests **without sharing a password**. The admin panel
+generates a unique QR code per guest. Scanning it opens the app, logs the guest
+in automatically, and takes them straight to the gallery — no form, no email.
+
+### New routes
+
+| Path | Who sees it | Purpose |
+|---|---|---|
+| `/guest?t=<token>` | Everyone (guests scan this) | Auto-authenticates and redirects to `/`. |
+| `/admin` | Admin / super-admin only | Guest management panel. |
+
+### Admin panel (`/admin`)
+
+Accessible via the **Guests** button in the header (visible to admin roles only).
+
+- **Create guest** — enter a name, click "Create & get QR". The QR code appears
+  instantly in the guest list below.
+- **QR code per guest** — rendered at 160 × 160 px in the app palette. Two
+  actions per code:
+  - **Save** — downloads a clean 512 × 512 px black-on-white PNG for printing.
+  - **Copy link** — copies the full `/guest?t=…` URL to the clipboard.
+- **Delete guest** — removes the account and invalidates their QR code. Any
+  live session using that code will be rejected on the next request.
+
+### Guest landing page (`GuestLanding.jsx`)
+
+Reads `?t=TOKEN` from the URL, calls `POST /auth/guest` on the backend, stores
+the returned JWT, then redirects to `/`. A `useRef` guard prevents
+React StrictMode from firing the auth call twice.
+
+If the token is missing or invalid, a styled error card is shown instead of a
+redirect.
+
+### `AuthContext` additions
+
+| Export | Type | Purpose |
+|---|---|---|
+| `guestLogin(token)` | `async fn` | Exchanges a guest token for a JWT and updates auth state. |
+| `isAdmin` | `boolean` | `true` when the current user's role is `admin` or `super_admin`. |
+
+### New packages
+
+| Package | Why |
+|---|---|
+| `react-router-dom` | Client-side routing — `BrowserRouter`, `Routes`, `Route`, `Navigate`. |
+| `qrcode` | Renders QR codes to a `<canvas>` and exports a PNG data URL for download. |
+
+### Bug fix — images not loading until backend restart
+
+After a bulk upload, photos would show broken image icons until the backend was
+restarted. Root cause: Google's `batchCreate` returns media items without a
+`baseUrl` while it processes the upload. The cache was storing these incomplete
+items, so every subsequent request for that image URL returned 404.
+
+**Fix:** the frontend always points `<img>` tags at the backend's `/photos/:id/raw`
+redirect (unchanged). The fix lives on the backend — `PhotoCacheService` now
+skips caching any item that lacks a `baseUrl`, so broken URLs are never stored
+and are resolved correctly once Google finishes processing.
+
+### Environment variable (optional)
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `VITE_PUBLIC_URL` | Base URL embedded in guest QR codes (strip trailing slash) | `window.location.origin` |
+
+Set this if the app is deployed behind a reverse proxy or custom domain so QR
+codes point at the correct public address.
