@@ -40,7 +40,7 @@ admin. Sign in with the backend's `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`.
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | Where the NestJS backend lives (no trailing slash) | `http://localhost:3000` |
 | `VITE_COUPLE_NAMES` | Names shown in the wordmark/masthead, split on `&` | `Amara & Sefu` |
-| `VITE_WEDDING_DATE` | Eyebrow line on the masthead | `Midsummer, 2025` |
+| `VITE_WEDDING_DATE` | Eyebrow line on the masthead | `Igbeyawo, 2025` |
 | `VITE_TAGLINE` | Sub-line under the names | (a default sentence) |
 
 ## How it talks to the API — efficiently
