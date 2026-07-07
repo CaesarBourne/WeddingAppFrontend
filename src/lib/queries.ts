@@ -3,34 +3,30 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { api } from './api';
+import { api } from './api.ts';
+import type { PagedPhotos, UploadResult } from '../types.ts';
 
 export const PAGE_SIZE = 24;
-const PHOTOS_KEY = ['photos', PAGE_SIZE];
+const PHOTOS_KEY = ['photos', PAGE_SIZE] as const;
 
-/**
- * Infinite, paginated gallery feed. React Query caches pages, dedupes
- * in-flight requests, and only refetches when stale — so scrolling back up
- * costs nothing and we never hammer the backend.
- */
 export function usePhotos(pageSize = PAGE_SIZE) {
   return useInfiniteQuery({
-    queryKey: ['photos', pageSize],
+    queryKey: ['photos', pageSize] as const,
     initialPageParam: 1,
-    queryFn: async ({ pageParam, signal }) => {
+    queryFn: async ({ pageParam, signal }): Promise<PagedPhotos> => {
       const { data } = await api.get('/photos', {
         params: { page: pageParam, pageSize },
         signal,
       });
-      return data; // { data: PhotoDto[], meta: PaginationMeta }
+      return data as PagedPhotos;
     },
-    getNextPageParam: (last) =>
+    getNextPageParam: (last: PagedPhotos) =>
       last?.meta?.hasNextPage ? last.meta.page + 1 : undefined,
     staleTime: 60_000,
   });
 }
 
-function buildForm(files, description) {
+function buildForm(files: File | File[], description: string): FormData {
   const form = new FormData();
   if (Array.isArray(files)) {
     files.forEach((f) => form.append('files', f));
@@ -41,14 +37,10 @@ function buildForm(files, description) {
   return form;
 }
 
-/**
- * Upload one or many files. One file → POST /photos/upload; more → the bulk
- * endpoint. Reports byte-level progress via onProgress(0..100).
- */
-export function useUpload(onProgress) {
+export function useUpload(onProgress?: (progress: number) => void) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ files, description }) => {
+  return useMutation<UploadResult, Error, { files: File[]; description: string }>({
+    mutationFn: async ({ files, description }): Promise<UploadResult> => {
       const many = files.length > 1;
       const endpoint = many ? '/photos/upload/bulk' : '/photos/upload';
       const payload = many ? buildForm(files, description) : buildForm(files[0], description);
@@ -59,16 +51,14 @@ export function useUpload(onProgress) {
           }
         },
       });
-      // Normalize single vs bulk into one shape.
       return many
-        ? data
+        ? (data as UploadResult)
         : { createdCount: 1, failedCount: 0, created: [data], failed: [] };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: PHOTOS_KEY }),
   });
 }
 
-/** Force the backend to re-sync the album index and drop cached URLs. */
 export function useRefresh() {
   const qc = useQueryClient();
   return useMutation({

@@ -5,15 +5,18 @@ import {
   useEffect,
   useMemo,
   useState,
+  type ReactNode,
 } from 'react';
-import PropTypes from 'prop-types';
-import { api, tokenStore } from '../lib/api';
+import { api, tokenStore } from '../lib/api.ts';
+import type { AuthUser, AuthContextValue } from '../types.ts';
 
-const AuthCtx = createContext(null);
+const AuthCtx = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [status, setStatus] = useState(tokenStore.get() ? 'checking' : 'guest');
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [status, setStatus] = useState<'checking' | 'authed' | 'guest'>(
+    tokenStore.get() ? 'checking' : 'guest',
+  );
 
   const logout = useCallback(() => {
     tokenStore.clear();
@@ -26,10 +29,8 @@ export function AuthProvider({ children }) {
     if (!tokenStore.get()) return;
     api
       .get('/auth/me')
-      .then(({ data }) => {
+      .then(({ data }: { data: AuthUser & { sub: string } }) => {
         if (!alive) return;
-        // /auth/me returns { sub, ... } — normalise to { id, ... } so
-        // components can always use user.id regardless of how auth happened.
         setUser({ ...data, id: data.sub });
         setStatus('authed');
       })
@@ -43,16 +44,22 @@ export function AuthProvider({ children }) {
     return () => globalThis.removeEventListener('wpa:unauthorized', handler);
   }, [logout]);
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+  const login = useCallback(async (email: string, password: string): Promise<AuthUser> => {
+    const { data } = await api.post<{ accessToken: string; user: AuthUser }>(
+      '/auth/login',
+      { email, password },
+    );
     tokenStore.set(data.accessToken);
     setUser(data.user);
     setStatus('authed');
     return data.user;
   }, []);
 
-  const guestLogin = useCallback(async (token) => {
-    const { data } = await api.post('/auth/guest', { token });
+  const guestLogin = useCallback(async (token: string): Promise<AuthUser> => {
+    const { data } = await api.post<{ accessToken: string; user: AuthUser }>(
+      '/auth/guest',
+      { token },
+    );
     tokenStore.set(data.accessToken);
     setUser(data.user);
     setStatus('authed');
@@ -61,7 +68,7 @@ export function AuthProvider({ children }) {
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
-  const value = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({ user, status, login, guestLogin, logout, isAdmin }),
     [user, status, login, guestLogin, logout, isAdmin],
   );
@@ -69,9 +76,7 @@ export function AuthProvider({ children }) {
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
-AuthProvider.propTypes = { children: PropTypes.node.isRequired };
-
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthCtx);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;

@@ -1,49 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Play, ImageOff } from 'lucide-react';
-import { rawSrc, isVideo } from '../lib/api.js';
+import { rawSrc, isVideo } from '../lib/api.ts';
+import type { PhotoDto } from '../types.ts';
 
 const MAX_RETRIES = 4;
 const RETRY_DELAY_MS = 4000;
 
-export default function PhotoTile({ photo, index, onOpen, compact = false }) {
+interface PhotoTileProps {
+  photo: PhotoDto;
+  index: number;
+  onOpen: (index: number) => void;
+  compact?: boolean;
+}
+
+export default function PhotoTile({ photo, index, onOpen, compact = false }: PhotoTileProps) {
   const reduce = useReducedMotion();
   const [retries, setRetries] = useState(0);
-  const timerRef = useRef(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const video = isVideo(photo.mimeType);
-
   const failed = retries > MAX_RETRIES;
 
   function handleError() {
     if (retries < MAX_RETRIES) {
-      timerRef.current = setTimeout(
-        () => setRetries((r) => r + 1),
-        RETRY_DELAY_MS,
-      );
+      timerRef.current = setTimeout(() => setRetries((r) => r + 1), RETRY_DELAY_MS);
     } else {
       setRetries(MAX_RETRIES + 1);
     }
   }
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  const ratio =
-    photo.width && photo.height ? photo.width / photo.height : 4 / 3;
+  const ratio = photo.width && photo.height ? photo.width / photo.height : 4 / 3;
 
-  // compact=true fills the parent container; default preserves aspect ratio.
   const containerStyle = compact
     ? { width: '100%', height: '100%' }
     : { aspectRatio: ratio };
   const mediaStyle = compact
-    ? { width: '100%', height: '100%', objectFit: 'cover' }
+    ? { width: '100%', height: '100%', objectFit: 'cover' as const }
     : { aspectRatio: ratio };
 
   const cacheBust = retries > 0 ? `&r=${retries}` : '';
   const imgSrc = rawSrc(photo.id, 'w700') + cacheBust;
   const videoSrc = rawSrc(photo.id, 'download') + cacheBust;
 
-  let media;
+  let media: React.ReactElement;
   if (failed) {
     media = (
       <div
@@ -121,10 +122,3 @@ export default function PhotoTile({ photo, index, onOpen, compact = false }) {
     </motion.figure>
   );
 }
-
-PhotoTile.propTypes = {
-  photo: PropTypes.object.isRequired,
-  index: PropTypes.number.isRequired,
-  onOpen: PropTypes.func.isRequired,
-  compact: PropTypes.bool,
-};

@@ -1,10 +1,17 @@
 import { motion } from 'framer-motion';
 import { Upload, RefreshCw, LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import { brand } from '../lib/brand.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { brand } from '../lib/brand.ts';
 
-export default function Header({ total, onUpload, onRefresh, refreshing }) {
+interface HeaderProps {
+  total: number | null;
+  onUpload: () => void;
+  onRefresh: () => void;
+  refreshing: boolean;
+}
+
+export default function Header({ total, onUpload, onRefresh, refreshing }: HeaderProps) {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 

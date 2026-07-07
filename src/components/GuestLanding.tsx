@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { brand } from '../lib/brand.js';
-import { errMessage, getGuestInfo } from '../lib/api.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { brand } from '../lib/brand.ts';
+import { errMessage, getGuestInfo } from '../lib/api.ts';
 
 export default function GuestLanding() {
   const [params] = useSearchParams();
@@ -16,7 +16,6 @@ export default function GuestLanding() {
   useEffect(() => {
     if (status === 'authed') {
       const token = params.get('t');
-      // Admin scanning a guest QR → show entrance validation page.
       if (isAdmin && token) {
         getGuestInfo(token)
           .then((data) =>
@@ -38,13 +37,14 @@ export default function GuestLanding() {
       return;
     }
 
-    // Only attempt once per mount; React StrictMode double-fires effects.
     if (tried.current) return;
     tried.current = true;
 
     guestLogin(token)
       .then(() => navigate('/welcome', { replace: true }))
-      .catch((err) => setError(errMessage(err, 'Could not sign in. Try scanning your QR code again.')));
+      .catch((err: unknown) =>
+        setError(errMessage(err, 'Could not sign in. Try scanning your QR code again.')),
+      );
   }, [status, params, guestLogin, navigate, isAdmin]);
 
   if (error) {
