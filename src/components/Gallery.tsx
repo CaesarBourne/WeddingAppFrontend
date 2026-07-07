@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
 import { ImagePlus, Images, RotateCw, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { usePhotos } from '../lib/queries.js';
-import { errMessage } from '../lib/api.js';
-import { brand } from '../lib/brand.js';
-import { timeAgo } from '../lib/timeAgo.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import PhotoTile from './PhotoTile.jsx';
-import Lightbox from './Lightbox.jsx';
+import { usePhotos } from '../lib/queries.ts';
+import { errMessage } from '../lib/api.ts';
+import { brand } from '../lib/brand.ts';
+import { timeAgo } from '../lib/timeAgo.ts';
+import { useAuth } from '../context/AuthContext.tsx';
+import PhotoTile from './PhotoTile.tsx';
+import Lightbox from './Lightbox.tsx';
+import type { PhotoDto, UploaderGroup as UploaderGroupType } from '../types.ts';
 
-const SKELETON_HEIGHTS = [220, 300, 180, 260, 340, 200];
+const SKELETON_HEIGHTS = [220, 300, 180, 260, 340, 200] as const;
 
-function Skeletons({ count = 6 }) {
+function Skeletons({ count = 6 }: { count?: number }) {
   return (
     <div className="masonry" aria-hidden="true">
       {SKELETON_HEIGHTS.slice(0, count).map((h) => (
@@ -22,16 +22,19 @@ function Skeletons({ count = 6 }) {
     </div>
   );
 }
-Skeletons.propTypes = { count: PropTypes.number };
 
-const groupShape = PropTypes.shape({
-  uploaderId: PropTypes.string,
-  uploaderName: PropTypes.string.isRequired,
-  photos: PropTypes.array.isRequired,
-  lastUploadedAt: PropTypes.string,
-});
+interface LightboxState {
+  photos: PhotoDto[];
+  index: number;
+}
 
-function UploaderGroup({ group, onOpen, delay }) {
+interface UploaderGroupProps {
+  group: UploaderGroupType;
+  onOpen: (state: LightboxState) => void;
+  delay?: number;
+}
+
+function UploaderGroup({ group, onOpen, delay = 0 }: UploaderGroupProps) {
   const navigate = useNavigate();
   const preview = group.photos.slice(0, 3);
   const extra = group.photos.length - 3;
@@ -94,13 +97,13 @@ function UploaderGroup({ group, onOpen, delay }) {
     </motion.section>
   );
 }
-UploaderGroup.propTypes = {
-  group: groupShape.isRequired,
-  onOpen: PropTypes.func.isRequired,
-  delay: PropTypes.number,
-};
 
-export default function Gallery({ onTotal, onUpload }) {
+interface GalleryProps {
+  onTotal?: (total: number) => void;
+  onUpload?: () => void;
+}
+
+export default function Gallery({ onTotal, onUpload }: GalleryProps) {
   const { user, isAdmin } = useAuth();
   const {
     data,
@@ -113,8 +116,8 @@ export default function Gallery({ onTotal, onUpload }) {
     refetch,
   } = usePhotos();
 
-  const [lightbox, setLightbox] = useState(null);
-  const sentinelRef = useRef(null);
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const photos = useMemo(
     () => (data ? data.pages.flatMap((p) => p.data) : []),
@@ -139,9 +142,8 @@ export default function Gallery({ onTotal, onUpload }) {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Group all loaded photos by uploader, sorted most-recently-active first.
-  const groups = useMemo(() => {
-    const map = new Map();
+  const groups = useMemo<UploaderGroupType[]>(() => {
+    const map = new Map<string, UploaderGroupType>();
     for (const photo of photos) {
       const key = photo.uploaderId ?? '__uncredited__';
       if (!map.has(key)) {
@@ -152,7 +154,7 @@ export default function Gallery({ onTotal, onUpload }) {
           lastUploadedAt: null,
         });
       }
-      const g = map.get(key);
+      const g = map.get(key)!;
       g.photos.push(photo);
       if (
         photo.uploadedAt &&
@@ -165,11 +167,10 @@ export default function Gallery({ onTotal, onUpload }) {
       if (!a.lastUploadedAt && !b.lastUploadedAt) return 0;
       if (!a.lastUploadedAt) return 1;
       if (!b.lastUploadedAt) return -1;
-      return new Date(b.lastUploadedAt) - new Date(a.lastUploadedAt);
+      return new Date(b.lastUploadedAt).getTime() - new Date(a.lastUploadedAt).getTime();
     });
   }, [photos]);
 
-  // Guests see only their own group; admins see every group.
   const visibleGroups = useMemo(
     () => (isAdmin ? groups : groups.filter((g) => g.uploaderId === user?.id)),
     [groups, isAdmin, user],
@@ -253,16 +254,12 @@ export default function Gallery({ onTotal, onUpload }) {
           photos={lightbox.photos}
           index={lightbox.index}
           onClose={() => setLightbox(null)}
-          onNavigate={(idx) => setLightbox((prev) => ({ ...prev, index: idx }))}
+          onNavigate={(idx) => setLightbox((prev) => prev ? { ...prev, index: idx } : null)}
         />
       )}
     </>
   );
 }
-Gallery.propTypes = {
-  onTotal: PropTypes.func,
-  onUpload: PropTypes.func,
-};
 
 export function Masthead() {
   return (

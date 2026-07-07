@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogIn, AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { brand } from '../lib/brand.js';
-import { errMessage } from '../lib/api.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { brand } from '../lib/brand.ts';
+import { errMessage } from '../lib/api.ts';
 
 export default function Login() {
   const { login } = useAuth();
@@ -12,7 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function submit(e) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setError('');

@@ -1,37 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode, Copy, Check, ToggleLeft, ToggleRight, Camera, User } from 'lucide-react';
+import {
+  UserPlus, Trash2, Download, ArrowLeft, Loader2, QrCode,
+  Copy, Check, ToggleLeft, ToggleRight, Camera, User,
+} from 'lucide-react';
 import QRCode from 'qrcode';
-import { useAuth } from '../context/AuthContext.jsx';
-import { api, errMessage, API_BASE, avatarSrc, uploadUserAvatar } from '../lib/api.js';
-import { useToast } from '../hooks/useToast.jsx';
-import { brand } from '../lib/brand.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { api, errMessage, API_BASE, avatarSrc, uploadUserAvatar } from '../lib/api.ts';
+import { useToast } from '../hooks/useToast.tsx';
+import { brand } from '../lib/brand.ts';
+import type { UserDto } from '../types.ts';
 
-const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL?.replace(/\/$/, '') || globalThis.location.origin;
+const PUBLIC_URL =
+  (import.meta.env.VITE_PUBLIC_URL as string | undefined)?.replace(/\/$/, '') ??
+  globalThis.location.origin;
 
-function guestUrl(token) {
+function guestUrl(token: string): string {
   return `${PUBLIC_URL}/guest?t=${token}`;
 }
 
 function useUsers() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const reload = () => {
+  function reload() {
     setLoading(true);
-    api.get('/users')
+    api
+      .get<UserDto[]>('/users')
       .then(({ data }) => setUsers(data))
       .finally(() => setLoading(false));
-  };
+  }
 
   useEffect(() => { reload(); }, []);
   return { users, loading, reload };
 }
 
-function QrCell({ token }) {
-  const canvasRef = useRef(null);
+interface QrCellProps {
+  token: string;
+}
+
+function QrCell({ token }: QrCellProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const url = guestUrl(token);
 
@@ -80,15 +90,19 @@ function QrCell({ token }) {
     </div>
   );
 }
-QrCell.propTypes = { token: PropTypes.string.isRequired };
 
-function UserAvatar({ user, onUploaded }) {
-  const inputRef = useRef(null);
+interface UserAvatarProps {
+  user: UserDto;
+  onUploaded?: () => void;
+}
+
+function UserAvatar({ user, onUploaded }: UserAvatarProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [version, setVersion] = useState(0);
   const { toast } = useToast();
 
-  async function handleFile(e) {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -114,19 +128,27 @@ function UserAvatar({ user, onUploaded }) {
         onClick={() => !uploading && inputRef.current?.click()}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+        }}
       >
         {user.avatarUrl ? (
           <img
             key={version}
             src={`${API_BASE}${user.avatarUrl}?v=${version}`}
-            alt={user.name}
+            alt={user.name ?? undefined}
             className="user-avatar-img"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         ) : null}
         <span className="user-avatar-initials" aria-hidden="true">
-          {uploading ? <Loader2 className="ico spin-ico" /> : (user.avatarUrl ? <Camera style={{ width: 14, height: 14 }} /> : initials)}
+          {uploading ? (
+            <Loader2 className="ico spin-ico" />
+          ) : user.avatarUrl ? (
+            <Camera style={{ width: 14, height: 14 }} />
+          ) : (
+            initials
+          )}
         </span>
       </div>
       <input
@@ -139,12 +161,15 @@ function UserAvatar({ user, onUploaded }) {
     </div>
   );
 }
-UserAvatar.propTypes = {
-  user: PropTypes.object.isRequired,
-  onUploaded: PropTypes.func,
-};
 
-function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
+interface UserRowProps {
+  user: UserDto;
+  onDelete: (id: string) => void;
+  onToggleButton: (id: string, next: boolean) => void;
+  onAvatarUploaded?: () => void;
+}
+
+function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }: UserRowProps) {
   const [deleting, setDeleting] = useState(false);
   const [toggling, setToggling] = useState(false);
   const { toast } = useToast();
@@ -178,13 +203,18 @@ function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
 
   const isGuest = user.role === 'guest';
   const ToggleIcon = user.buttonEnabled ? ToggleRight : ToggleLeft;
-  const toggleIcon = toggling ? <Loader2 className="ico spin-ico" /> : <ToggleIcon className="ico" />;
+  const toggleIconEl = toggling ? (
+    <Loader2 className="ico spin-ico" />
+  ) : (
+    <ToggleIcon className="ico" />
+  );
 
-  const admissionChip = isGuest && user.admissionStatus === 'admitted' ? (
-    <span className="admission-chip admission-chip--admitted">Admitted</span>
-  ) : isGuest ? (
-    <span className="admission-chip admission-chip--pending">Pending</span>
-  ) : null;
+  const admissionChip =
+    isGuest && user.admissionStatus === 'admitted' ? (
+      <span className="admission-chip admission-chip--admitted">Admitted</span>
+    ) : isGuest ? (
+      <span className="admission-chip admission-chip--pending">Pending</span>
+    ) : null;
 
   return (
     <div className="user-row">
@@ -199,9 +229,7 @@ function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
         {user.email && <span className="user-email">{user.email}</span>}
       </div>
 
-      {isGuest && user.guestToken && (
-        <QrCell token={user.guestToken} />
-      )}
+      {isGuest && user.guestToken && <QrCell token={user.guestToken} />}
 
       {isGuest && (
         <div className="user-row-actions">
@@ -211,7 +239,7 @@ function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
             disabled={toggling}
             title={user.buttonEnabled ? "Disable guest's second button" : "Enable guest's second button"}
           >
-            {toggleIcon}
+            {toggleIconEl}
             {user.buttonEnabled ? 'Button on' : 'Button off'}
           </button>
 
@@ -229,23 +257,6 @@ function UserRow({ user, onDelete, onToggleButton, onAvatarUploaded }) {
   );
 }
 
-const userShape = PropTypes.shape({
-  id: PropTypes.string.isRequired,
-  name: PropTypes.string,
-  email: PropTypes.string,
-  role: PropTypes.string.isRequired,
-  guestToken: PropTypes.string,
-  buttonEnabled: PropTypes.bool,
-  admissionStatus: PropTypes.string,
-  avatarUrl: PropTypes.string,
-});
-UserRow.propTypes = {
-  user: userShape.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onToggleButton: PropTypes.func.isRequired,
-  onAvatarUploaded: PropTypes.func,
-};
-
 export default function AdminPanel() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -255,7 +266,7 @@ export default function AdminPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  async function createGuest(e) {
+  async function createGuest(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || busy) return;
     setError('');
@@ -293,14 +304,17 @@ export default function AdminPanel() {
           <button className="btn btn-ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="ico" /> Gallery
           </button>
-          <button className="btn btn-ghost btn-icon btn-danger" onClick={logout} title="Sign out">
+          <button
+            className="btn btn-ghost btn-icon btn-danger"
+            onClick={logout}
+            title="Sign out"
+          >
             <ArrowLeft className="ico" style={{ transform: 'scaleX(-1)' }} />
           </button>
         </div>
       </motion.header>
 
       <main className="admin-main">
-        {/* Create guest */}
         <motion.section
           className="admin-card"
           initial={{ opacity: 0, y: 14 }}
@@ -339,7 +353,6 @@ export default function AdminPanel() {
           </form>
         </motion.section>
 
-        {/* Guest list */}
         <motion.section
           className="admin-card"
           initial={{ opacity: 0, y: 14 }}
@@ -372,7 +385,6 @@ export default function AdminPanel() {
           )}
         </motion.section>
 
-        {/* Admin accounts (read-only) */}
         {admins.length > 0 && (
           <motion.section
             className="admin-card"

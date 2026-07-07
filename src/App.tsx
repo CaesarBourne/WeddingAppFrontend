@@ -1,31 +1,34 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { useAuth } from './context/AuthContext.jsx';
-import { useRefresh } from './lib/queries.js';
-import { useToast } from './hooks/useToast.jsx';
-import { errMessage } from './lib/api.js';
-import Header from './components/Header.jsx';
-import Gallery, { Masthead } from './components/Gallery.jsx';
-import UploadPanel from './components/UploadPanel.jsx';
-import Login from './components/Login.jsx';
-import GuestLanding from './components/GuestLanding.jsx';
-import GuestWelcome from './components/GuestWelcome.jsx';
-import AdminPanel from './components/AdminPanel.jsx';
-import UploaderPage from './components/UploaderPage.jsx';
-import QRValidate from './components/QRValidate.jsx';
+import { useAuth } from './context/AuthContext.tsx';
+import { useRefresh } from './lib/queries.ts';
+import { useToast } from './hooks/useToast.tsx';
+import { errMessage } from './lib/api.ts';
+import Header from './components/Header.tsx';
+import Gallery, { Masthead } from './components/Gallery.tsx';
+import UploadPanel from './components/UploadPanel.tsx';
+import Login from './components/Login.tsx';
+import GuestLanding from './components/GuestLanding.tsx';
+import GuestWelcome from './components/GuestWelcome.tsx';
+import AdminPanel from './components/AdminPanel.tsx';
+import UploaderPage from './components/UploaderPage.tsx';
+import QRValidate from './components/QRValidate.tsx';
 
-function AdminRoute({ status, isAdmin }) {
+interface AdminRouteProps {
+  status: string;
+  isAdmin: boolean;
+}
+
+function AdminRoute({ status, isAdmin }: AdminRouteProps) {
   if (status !== 'authed') return <Login />;
   if (isAdmin) return <AdminPanel />;
   return <Navigate to="/" replace />;
 }
-AdminRoute.propTypes = { status: PropTypes.string.isRequired, isAdmin: PropTypes.bool.isRequired };
 
 function GalleryPage() {
   const { toast } = useToast();
-  const [total, setTotal] = useState(null);
+  const [total, setTotal] = useState<number | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const refresh = useRefresh();
 
@@ -70,37 +73,30 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Public: guests scan their QR code and land here to auto-authenticate */}
       <Route path="/guest" element={<GuestLanding />} />
 
-      {/* Guest welcome page — shown after QR auth, requires an active session */}
       <Route
         path="/welcome"
         element={status === 'authed' ? <GuestWelcome /> : <GuestLanding />}
       />
 
-      {/* Admin panel — requires an admin/super_admin session */}
       <Route path="/admin" element={<AdminRoute status={status} isAdmin={isAdmin} />} />
 
-      {/* Per-uploader full gallery — navigated to from "See more" on the main gallery */}
       <Route
         path="/gallery/uploader/:uploaderId"
         element={status === 'authed' ? <UploaderPage /> : <Login />}
       />
 
-      {/* QR entrance validation — admin scans a guest's QR code at the event door */}
       <Route
         path="/qr/validate/:guestId"
         element={status === 'authed' && isAdmin ? <QRValidate /> : <Login />}
       />
 
-      {/* Main gallery — any authenticated user (admin or guest) */}
       <Route
         path="/"
         element={status === 'authed' ? <GalleryPage /> : <Login />}
       />
 
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

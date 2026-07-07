@@ -1,15 +1,23 @@
 import { useCallback, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
-import { rawSrc, isVideo, API_BASE } from '../lib/api.js';
+import { rawSrc, isVideo, API_BASE } from '../lib/api.ts';
+import type { PhotoDto } from '../types.ts';
 
-export default function Lightbox({ photos, index, onClose, onNavigate }) {
+interface LightboxProps {
+  photos: PhotoDto[];
+  index: number;
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+}
+
+export default function Lightbox({ photos, index, onClose, onNavigate }: LightboxProps) {
   const reduce = useReducedMotion();
   const open = index != null;
   const photo = open ? photos[index] : null;
 
   const go = useCallback(
-    (dir) => {
+    (dir: number) => {
       if (index == null) return;
       const next = index + dir;
       if (next >= 0 && next < photos.length) onNavigate(next);
@@ -17,10 +25,9 @@ export default function Lightbox({ photos, index, onClose, onNavigate }) {
     [index, photos.length, onNavigate],
   );
 
-  // Keyboard controls.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowRight') go(1);
       else if (e.key === 'ArrowLeft') go(-1);
@@ -29,17 +36,13 @@ export default function Lightbox({ photos, index, onClose, onNavigate }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, go, onClose]);
 
-  // Lock body scroll while open.
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  // Quietly preload the neighbouring images for instant nav.
   useEffect(() => {
     if (index == null) return;
     [index - 1, index + 1].forEach((i) => {
@@ -55,7 +58,7 @@ export default function Lightbox({ photos, index, onClose, onNavigate }) {
 
   return (
     <AnimatePresence>
-      {open && (
+      {open && photo && (
         <motion.div
           className="lb"
           initial={{ opacity: 0 }}

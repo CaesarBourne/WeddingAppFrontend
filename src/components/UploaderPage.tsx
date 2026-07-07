@@ -2,18 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
-import { usePhotos } from '../lib/queries.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import PhotoTile from './PhotoTile.jsx';
-import Lightbox from './Lightbox.jsx';
+import { usePhotos } from '../lib/queries.ts';
+import { useAuth } from '../context/AuthContext.tsx';
+import PhotoTile from './PhotoTile.tsx';
+import Lightbox from './Lightbox.tsx';
+import type { PhotoDto } from '../types.ts';
+
+interface LightboxState {
+  photos: PhotoDto[];
+  index: number;
+}
 
 export default function UploaderPage() {
-  const { uploaderId } = useParams();
+  const { uploaderId } = useParams<{ uploaderId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin } = useAuth();
 
-  const resolvedId = uploaderId === '_uncredited_' ? null : uploaderId;
+  const resolvedId = uploaderId === '_uncredited_' ? null : (uploaderId ?? null);
 
   const {
     data,
@@ -23,10 +29,9 @@ export default function UploaderPage() {
     isFetchingNextPage,
   } = usePhotos();
 
-  const [lightbox, setLightbox] = useState(null);
-  const sentinelRef = useRef(null);
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Guests may only view their own photo page.
   useEffect(() => {
     if (!isAdmin && user?.id !== resolvedId) {
       navigate('/', { replace: true });
@@ -43,7 +48,6 @@ export default function UploaderPage() {
     [photos, resolvedId],
   );
 
-  // Infinite scroll — keep loading pages while the sentinel is visible.
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasNextPage) return;
@@ -57,9 +61,10 @@ export default function UploaderPage() {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const locationState = location.state as { uploaderName?: string } | null;
   const uploaderName =
     uploaderPhotos[0]?.uploaderName ??
-    location.state?.uploaderName ??
+    locationState?.uploaderName ??
     (uploaderId === '_uncredited_' ? 'Wedding Album' : 'Guest');
 
   return (
@@ -122,7 +127,7 @@ export default function UploaderPage() {
           photos={lightbox.photos}
           index={lightbox.index}
           onClose={() => setLightbox(null)}
-          onNavigate={(idx) => setLightbox((prev) => ({ ...prev, index: idx }))}
+          onNavigate={(idx) => setLightbox((prev) => prev ? { ...prev, index: idx } : null)}
         />
       )}
     </div>

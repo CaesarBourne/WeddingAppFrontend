@@ -2,18 +2,18 @@ import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Image, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import { brand } from '../lib/brand.js';
-import { avatarSrc, uploadMyAvatar, errMessage } from '../lib/api.js';
-import { useToast } from '../hooks/useToast.jsx';
+import { useAuth } from '../context/AuthContext.tsx';
+import { brand } from '../lib/brand.ts';
+import { avatarSrc, uploadMyAvatar, errMessage } from '../lib/api.ts';
+import { useToast } from '../hooks/useToast.tsx';
 
-function AvatarUpload({ userId }) {
-  const inputRef = useRef(null);
+function AvatarUpload({ userId }: { userId: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [version, setVersion] = useState(0);
   const { toast } = useToast();
 
-  async function handleFile(e) {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
