@@ -1,8 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
-import { useToast } from '../hooks/useToast.jsx';
+import { useToast } from '../hooks/useToast.tsx';
+import type { Toast } from '../types.ts';
 
-const ICONS = { ok: CheckCircle2, err: AlertCircle, info: Info };
+const ICONS: Record<Toast['tone'], typeof CheckCircle2> = {
+  ok: CheckCircle2,
+  err: AlertCircle,
+  info: Info,
+};
 
 export default function Toasts() {
   const { toasts, dismiss } = useToast();
@@ -10,7 +15,7 @@ export default function Toasts() {
     <div className="toast-stack" role="region" aria-live="polite" aria-label="Notifications">
       <AnimatePresence initial={false}>
         {toasts.map((t) => {
-          const Icon = ICONS[t.tone] || Info;
+          const Icon = ICONS[t.tone] ?? Info;
           return (
             <motion.div
               key={t.id}
@@ -23,7 +28,11 @@ export default function Toasts() {
             >
               <Icon className="ico" />
               <span className="msg">{t.msg}</span>
-              <button className="btn btn-icon btn-ghost" onClick={() => dismiss(t.id)} aria-label="Dismiss">
+              <button
+                className="btn btn-icon btn-ghost"
+                onClick={() => dismiss(t.id)}
+                aria-label="Dismiss"
+              >
                 <X className="ico" />
               </button>
             </motion.div>

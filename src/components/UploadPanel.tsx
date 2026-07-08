@@ -1,41 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { UploadCloud, X, Trash2, Loader2, ImagePlus } from 'lucide-react';
-import { useUpload } from '../lib/queries.js';
-import { useToast } from '../hooks/useToast.jsx';
-import { errMessage } from '../lib/api.js';
+import { useUpload } from '../lib/queries.ts';
+import { useToast } from '../hooks/useToast.tsx';
+import { errMessage } from '../lib/api.ts';
 
 const ACCEPT = 'image/*,video/*';
 const MAX_FILES = 200;
 
-function prettySize(bytes) {
+function prettySize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default function UploadPanel({ onClose }) {
+interface UploadPanelProps {
+  onClose: () => void;
+}
+
+export default function UploadPanel({ onClose }: UploadPanelProps) {
   const { toast } = useToast();
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [description, setDescription] = useState('');
   const [over, setOver] = useState(false);
   const [progress, setProgress] = useState(0);
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const upload = useUpload(setProgress);
   const busy = upload.isPending;
 
-  // Object URLs for instant thumbnails; revoke on change/unmount.
   const previews = useMemo(
     () => files.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
     [files],
   );
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
-  function addFiles(list) {
-    const incoming = Array.from(list).filter((f) =>
-      /^(image|video)\//.test(f.type),
-    );
+  function addFiles(list: FileList | null) {
+    if (!list) return;
+    const incoming = Array.from(list).filter((f) => /^(image|video)\//.test(f.type));
     if (!incoming.length) {
       toast.err('Only image and video files can be added.');
       return;
@@ -52,7 +54,7 @@ export default function UploadPanel({ onClose }) {
     });
   }
 
-  function removeAt(i) {
+  function removeAt(i: number) {
     setFiles((prev) => prev.filter((_, idx) => idx !== i));
   }
 
