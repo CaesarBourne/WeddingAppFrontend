@@ -24,6 +24,7 @@ export default async function QrValidatePage({
       <header className="flex items-center gap-4 border-b p-4">
         <Button
           variant="ghost"
+          nativeButton={false}
           render={
             <Link href="/admin">
               <ArrowLeft /> Guest list

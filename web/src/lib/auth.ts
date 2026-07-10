@@ -1,18 +1,24 @@
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api-server";
-import { clearSessionToken, getSessionToken } from "./session";
+import { getSessionToken } from "./session";
 import type { AuthUser } from "./types";
 
-/** Reads the session cookie and validates it against GET /auth/me. Server-only. */
+/**
+ * Reads the session cookie and validates it against GET /auth/me. Server-only.
+ *
+ * Does NOT clear an invalid/expired cookie here: Next.js only allows cookie
+ * mutation inside a Server Action or Route Handler, and this is called from
+ * plain Server Components (every protected page). A stale cookie just keeps
+ * failing this check on every request until the user explicitly logs out
+ * (logoutAction) or it expires — the user is still correctly redirected.
+ */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const token = await getSessionToken();
   if (!token) return null;
 
   const res = await apiFetch("/auth/me");
-  if (!res.ok) {
-    await clearSessionToken();
-    return null;
-  }
+  if (!res.ok) return null;
+
   const data = (await res.json()) as AuthUser & { sub: string };
   return { ...data, id: data.sub };
 }

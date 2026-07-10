@@ -130,6 +130,7 @@ export function QRValidateClient({
       {(ringState === "just_admitted" || ringState === "already_admitted") && (
         <Button
           variant="ghost"
+          nativeButton={false}
           render={
             <Link href="/admin">
               <ArrowLeft /> Back to guest list

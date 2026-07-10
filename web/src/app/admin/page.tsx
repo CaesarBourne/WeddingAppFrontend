@@ -28,9 +28,15 @@ export default async function AdminPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" render={<Link href="/">
-            <ArrowLeft /> Site
-          </Link>} />
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <Link href="/">
+                <ArrowLeft /> Site
+              </Link>
+            }
+          />
           <form action={logoutAction}>
             <Button type="submit" variant="ghost" size="icon" title="Sign out">
               <LogOut />

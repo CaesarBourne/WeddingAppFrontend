@@ -34,6 +34,7 @@ export default async function WelcomePage() {
 
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
             <Button
+              nativeButton={false}
               render={
                 <Link href="/moments">
                   <ImageIcon />
@@ -45,6 +46,7 @@ export default async function WelcomePage() {
             {user.buttonEnabled ? (
               <Button
                 variant="secondary"
+                nativeButton={false}
                 render={
                   <Link href="/moments?myAlbum=true">
                     <ImageIcon />
