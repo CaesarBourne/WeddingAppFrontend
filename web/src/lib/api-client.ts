@@ -14,7 +14,8 @@ export function buildApiUrl(
   return url.toString();
 }
 
-export type PhotoSize = "thumb" | "display" | "download";
+// Named sizes plus any raw Google param the backend accepts (e.g. "w700", "w800-h600").
+export type PhotoSize = "thumb" | "display" | "download" | (string & {});
 
 /** Stable, non-expiring image/video URL — mirrors src/lib/api.ts's rawSrc(). */
 export function rawPhotoUrl(

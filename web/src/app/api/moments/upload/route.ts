@@ -16,7 +16,12 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "You must be signed in to upload." }, { status: 401 });
   }
 
-  const incoming = await request.formData();
+  let incoming: FormData;
+  try {
+    incoming = await request.formData();
+  } catch {
+    return Response.json({ error: "Invalid upload request." }, { status: 400 });
+  }
   const files = incoming.getAll("files").filter((f): f is File => f instanceof File);
   const description = String(incoming.get("description") ?? "").trim();
 
