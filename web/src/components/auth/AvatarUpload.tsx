@@ -11,38 +11,38 @@ import { Button } from "@/components/ui/button";
 
 const initialState: ActionState = {};
 
+function AvatarImage({ userId, cacheKey }: { userId: string; cacheKey: number }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <Camera className="h-8 w-8 text-muted-foreground" />;
+  return (
+    <img
+      src={`${avatarUrl(clientEnv.apiBaseUrl, userId)}?v=${cacheKey}`}
+      alt="Your profile photo"
+      className="h-full w-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export function AvatarUpload({ userId }: { userId: string }) {
   const [state, formAction, pending] = useActionState(uploadMyAvatarAction, initialState);
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [version, setVersion] = useState(0);
-  const [imgFailed, setImgFailed] = useState(false);
+  // Bumped inside the file-input event handler (not render/effect), so it's a
+  // plain, compiler-safe imperative update that forces <AvatarImage> to remount
+  // with a fresh cache-busted src and reset onError state on every attempt.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (pending) return;
-    if (state.error) {
-      toast.error(state.error);
-    } else if (state !== initialState) {
-      setVersion((v) => v + 1);
-      setImgFailed(false);
-      toast.success("Profile photo updated.");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, pending]);
+    if (state === initialState) return;
+    if (state.error) toast.error(state.error);
+    else toast.success("Profile photo updated.");
+  }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col items-center gap-3">
       <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border bg-muted">
-        {!imgFailed && (
-          <img
-            key={version}
-            src={`${avatarUrl(clientEnv.apiBaseUrl, userId)}?v=${version}`}
-            alt="Your profile photo"
-            className="h-full w-full object-cover"
-            onError={() => setImgFailed(true)}
-          />
-        )}
-        {imgFailed && <Camera className="h-8 w-8 text-muted-foreground" />}
+        <AvatarImage key={attempt} userId={userId} cacheKey={attempt} />
       </div>
 
       <Button
@@ -62,7 +62,11 @@ export function AvatarUpload({ userId }: { userId: string }) {
         name="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
-        onChange={() => formRef.current?.requestSubmit()}
+        onChange={(e) => {
+          if (!e.target.files?.[0]) return;
+          setAttempt((a) => a + 1);
+          formRef.current?.requestSubmit();
+        }}
       />
     </form>
   );
