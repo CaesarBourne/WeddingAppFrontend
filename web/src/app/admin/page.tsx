@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, LogOut, QrCode, User } from "lucide-react";
+import { ArrowLeft, LogOut, QrCode, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
@@ -28,6 +28,15 @@ export default async function AdminPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <Link href="/admin/moderation">
+                <ShieldCheck /> Moderation
+              </Link>
+            }
+          />
           <Button
             variant="ghost"
             nativeButton={false}
