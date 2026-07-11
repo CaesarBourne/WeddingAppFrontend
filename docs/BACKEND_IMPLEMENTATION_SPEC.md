@@ -5,12 +5,35 @@
 > Every claim below was verified against the compiled backend in `WeddingApp/dist/` (module wiring,
 > guards, controllers, services, entities). Paths are given as their `src` equivalents
 > (e.g. `photos/photos.service.ts`).
-> Generated: 2026-07-10. Status: **for review before implementation.**
+> Generated: 2026-07-10. Status: **IMPLEMENTED (2026-07-11) — see the banner below.**
+
+> ## ⚠️ Implementation update (2026-07-11): built with **Approach A**, not album-membership
+>
+> The moderation backend has been **implemented and validated end-to-end** against the real Google
+> Photos account, but with a **different, simpler design** than the album-membership approach this
+> document originally specified. A spike proved album operations are too slow (eventual consistency)
+> and partially blocked (append-only token scope can't remove from albums).
+>
+> **What was actually built (the authoritative contract is [`MODERATION.md`](./MODERATION.md) §5):**
+> - Moderation is a **database `status`** (not album membership). All uploads go into the album at
+>   upload time; the DB decides visibility.
+> - Public `GET /photos` is a **pure DB read** of approved rows (media metadata is stored in
+>   `PhotoMeta`); `GET /photos/:id/raw` **denies non-approved**; `PATCH /photos/:id/status` is a
+>   DB-only, instant approve/reject.
+> - **`GooglePhotosService` is UNCHANGED** — the `batchAddMediaItems`/`batchRemoveMediaItems` additions
+>   this doc proposed (§3.2) were **not used**. No Google token re-mint needed (append-only scope suffices).
+>
+> **5 backend files changed** (copy these to the real backend repo):
+> `photos/entities/photo-meta.entity.ts`, `photos/photo-meta.service.ts`, `photos/photos.service.ts`,
+> `photos/dto/list-photos.dto.ts`, `photos/photos.controller.ts`.
+>
+> Sections below are retained as the original analysis/rationale; where they describe album-membership
+> mechanics, defer to `MODERATION.md`.
 
 > **Repository boundary:** the NestJS backend is a **separate repository**. The `WeddingApp/` copy in
-> this workspace is **reference only**. The changes below are **specifications for the backend team to
-> implement in the backend repo** — they are not applied from this repo, and backend business logic is
-> never migrated into the Next.js app. (See `ARCHITECTURE.md` §4.6.)
+> this workspace is **reference only** — a working mirror. Edited files are copied by hand into the
+> backend repo, then built & deployed there. Backend business logic is never migrated into the Next.js
+> app. (See `ARCHITECTURE.md` §4.6.)
 
 ## How to read this document
 

@@ -130,13 +130,18 @@ The NestJS API becomes the single source of truth for **both** identity and mode
 Frontend A's auth/QR/guest/admission code is **untouched and only extended**, honoring the
 minimize-rewrites constraint.
 
-### 4.3 Keep Google Photos; moderate by album membership
+### 4.3 Keep Google Photos; moderate via the database (Approach A — implemented)
 
-Google Photos and the `/photos/:id/raw` abstraction stay. Because the public gallery already reads the
-album, moderation is enforced by controlling **album membership**: guest uploads are created in the
-account **library only** (not the album) and marked `pending`; approval **adds** them to the album.
-The public read path never changes. Full detail, alternatives, and trade-offs are in
-[`MODERATION.md`](./MODERATION.md).
+Google Photos and the `/photos/:id/raw` abstraction stay. Moderation is enforced by a **`status`
+column in our database**, not by Google album membership. All uploads go into the couple's album at
+upload time (their keepsake); a `PhotoMeta.status` (`pending`/`approved`/`rejected`) decides public
+visibility. The public gallery is a **pure DB read** of approved rows, and `/photos/:id/raw` denies
+non-approved photos. Approve/reject is a single DB update — **instant, no Google write**.
+
+> This replaced an earlier album-membership design after a spike showed Google album operations are
+> too slow (eventual consistency on approve) and partially blocked (append-only token scope can't
+> remove from an album). Full detail, the spike findings, and trade-offs are in
+> [`MODERATION.md`](./MODERATION.md). **This design is implemented and validated end-to-end.**
 
 ### 4.4 Topology and deployment
 
@@ -215,25 +220,24 @@ sequenceDiagram
 
 ---
 
-## 5. Backend changes (additive, backward-compatible)
+## 5. Backend changes (implemented — Approach A)
 
-Concrete and grounded in the read code. None of these break Frontend A while migration is in progress.
+Additive and backward-compatible; validated end-to-end. **5 files changed**; `GooglePhotosService` is
+**unchanged** (no album-membership calls needed). See [`MODERATION.md`](./MODERATION.md) §5 for the full
+contract and [`BACKEND_IMPLEMENTATION_SPEC.md`](./BACKEND_IMPLEMENTATION_SPEC.md) for the copy-to-repo list.
 
-- **`PhotoMeta` entity** (`photos/entities/photo-meta.entity.ts`): add `status`
-  (`'pending' | 'approved' | 'rejected'`, default `'pending'`) and `source` (`'guest' | 'couple'`,
-  default `'guest'`); optional `isAnonymous` (bool, display-only). Mirrors the existing
-  `User.admissionStatus` varchar-default pattern. SQLite dev auto-syncs; add a Postgres migration for prod.
-- **`GooglePhotosService`**: make `batchCreate(albumId?, …)` omit `albumId` when null (library-only
-  create); add `batchAddMediaItems(albumId, ids)` → `POST /albums/{albumId}:batchAddMediaItems`.
-- **`PhotoMetaService`**: extend `saveMany` to record `{ status, source }`; add `findByStatus(status)`
-  and `updateStatus(googleId, status)`.
-- **`PhotosService`**: branch upload on uploader role (guest → library-only + `pending`; admin/couple →
-  album + `approved`/`couple`); add `listModeration(status)` and `setStatus(id, status)` (approve →
-  `batchAddMediaItems` + `bustIndex`).
-- **`PhotosController`**: make `GET /photos` `@Public()` (approved-only via the album) for the public
-  site; add `GET /photos/moderation` and `PATCH /photos/:id/status` under `@Roles(ADMIN, SUPER_ADMIN)`;
-  upload endpoints keep the JWT guard. Optional hardening: gate `GET /photos/:id/raw` for non-approved
-  items (Google IDs are opaque, so this is low-urgency).
+- **`photos/entities/photo-meta.entity.ts`**: add `status` (default `'approved'`, indexed), `source`
+  (default `'guest'`), `isAnonymous`, and media metadata (`filename`, `mimeType`, `width`, `height`,
+  `creationTime`). Default `'approved'` means a schema sync marks existing rows approved — **no
+  backfill**; guest uploads set `pending` explicitly. SQLite dev auto-syncs; add a Postgres migration for prod.
+- **`photos/photo-meta.service.ts`**: `saveMany` records per-item metadata + `{status, source,
+  isAnonymous}`; add `findByStatus`, `findByStatusPaged`, `updateStatus`.
+- **`photos/photos.service.ts`**: uploads always go to the album and store metadata (guest→`pending`,
+  admin→`approved`/`couple`); `list()` is a pure DB read of approved rows; add `listModeration` and
+  `setStatus` (DB-only); `resolveRawUrl` denies non-approved.
+- **`photos/dto/list-photos.dto.ts`**: add `isAnonymous` to the upload DTO; add moderation query/patch DTOs.
+- **`photos/photos.controller.ts`**: `GET /photos` → `@Public()`; add `GET /photos/moderation` and
+  `PATCH /photos/:id/status` under `@Roles(ADMIN, SUPER_ADMIN)`; upload endpoints pass uploader role + `isAnonymous`.
 
 **Deferred (YAGNI, to avoid scope creep):** named album grouping, RSVP persistence (`POST /rsvp`),
 server-side likes. RSVP/Gift stay static initially.
