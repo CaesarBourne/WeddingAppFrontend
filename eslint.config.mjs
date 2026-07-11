@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local-only reference copies (separate repos / retired Vite app) — not part of this app.
+    "legacy/**",
+    "emmilove/**",
+    "weddingapp/**",
+    "WeddingApp/**",
   ]),
 ]);
 
