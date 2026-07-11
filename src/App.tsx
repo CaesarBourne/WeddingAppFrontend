@@ -14,13 +14,9 @@ import GuestWelcome from './components/GuestWelcome.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import UploaderPage from './components/UploaderPage.tsx';
 import QRValidate from './components/QRValidate.tsx';
+import QRScanner from './components/QRScanner.tsx';
 
-interface AdminRouteProps {
-  status: string;
-  isAdmin: boolean;
-}
-
-function AdminRoute({ status, isAdmin }: AdminRouteProps) {
+function AdminRoute({ status, isAdmin }: Readonly<{ status: string; isAdmin: boolean }>) {
   if (status !== 'authed') return <Login />;
   if (isAdmin) return <AdminPanel />;
   return <Navigate to="/" replace />;
@@ -90,6 +86,11 @@ export default function App() {
       <Route
         path="/qr/validate/:guestId"
         element={status === 'authed' && isAdmin ? <QRValidate /> : <Login />}
+      />
+
+      <Route
+        path="/scan"
+        element={status === 'authed' && isAdmin ? <QRScanner /> : <Login />}
       />
 
       <Route

@@ -67,10 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === 'super_admin';
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, guestLogin, logout, isAdmin }),
-    [user, status, login, guestLogin, logout, isAdmin],
+    () => ({ user, status, login, guestLogin, logout, isAdmin, isSuperAdmin }),
+    [user, status, login, guestLogin, logout, isAdmin, isSuperAdmin],
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

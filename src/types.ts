@@ -81,6 +81,7 @@ export interface AuthContextValue {
   guestLogin: (token: string) => Promise<AuthUser>;
   logout: () => void;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 /** Single toast notification. */

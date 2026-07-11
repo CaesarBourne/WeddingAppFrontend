@@ -96,3 +96,18 @@ export async function getGuestAdmission(guestId: string): Promise<UserDto> {
   const { data } = await api.get(`/users/${encodeURIComponent(guestId)}`);
   return data as UserDto;
 }
+
+/** Super-admin creates a new admin account. */
+export async function createAdmin(payload: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<UserDto> {
+  const { data } = await api.post('/users/admins', payload);
+  return data as UserDto;
+}
+
+/** Super-admin removes an admin account. */
+export async function deleteAdmin(id: string): Promise<void> {
+  await api.delete(`/users/admins/${encodeURIComponent(id)}`);
+}
