@@ -89,3 +89,54 @@ export async function admitGuestAction(guestId: string): Promise<
   revalidatePath("/admin");
   return (await res.json()) as { admissionStatus: string; admittedAt: string | null };
 }
+
+export async function createAdminAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!name || !email || password.length < 8)
+    return { error: "Name, email, and a password of at least 8 characters are required." };
+
+  const res = await apiFetch("/users/admins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not create admin.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function deleteAdminAction(adminId: string): Promise<ActionState> {
+  const res = await apiFetch(`/users/admins/${adminId}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not remove admin.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
+/** Looks up a guest by their QR token without creating a session. Returns the guest's ID. */
+export async function getGuestByTokenAction(
+  token: string,
+): Promise<{ guestId: string; name: string } | { error: string }> {
+  const res = await apiFetch("/auth/guest-info", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Guest not found or QR code is invalid.");
+    return { error: err.message };
+  }
+  const data = (await res.json()) as { id: string; name?: string };
+  return { guestId: data.id, name: data.name ?? "Guest" };
+}

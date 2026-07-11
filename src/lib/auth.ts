@@ -40,3 +40,14 @@ export async function requireAdmin(): Promise<AuthUser> {
   if (!isAdmin(user)) redirect("/");
   return user;
 }
+
+export function isSuperAdmin(user: AuthUser | null): boolean {
+  return user?.role === "super_admin";
+}
+
+/** Redirects to /admin if the current user is not a super_admin. */
+export async function requireSuperAdmin(): Promise<AuthUser> {
+  const user = await requireAdmin();
+  if (!isSuperAdmin(user)) redirect("/admin");
+  return user;
+}
