@@ -22,6 +22,17 @@ export const metadata: Metadata = {
   description: env.NEXT_PUBLIC_TAGLINE,
 };
 
+// Applies the saved (or system) theme before first paint, on EVERY page — so the
+// dark/light choice is consistent everywhere (including /admin, which has no
+// ThemeToggle) with no flash. Kept in sync with use-theme's storage key.
+const themeScript = `
+(function(){try{
+  var t=localStorage.getItem('emma-funmi-theme');
+  var dark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if(dark)document.documentElement.classList.add('dark');
+}catch(e){}})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,6 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "font-sans",
         inter.variable,
@@ -37,6 +49,9 @@ export default function RootLayout({
         greatVibes.variable,
       )}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         {children}
         <Toaster />

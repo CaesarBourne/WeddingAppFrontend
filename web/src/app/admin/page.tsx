@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
 import { UserRow } from "@/components/admin/UserRow";
+import ThemeToggle from "@/components/wedding/ThemeToggle";
 import { apiFetch } from "@/lib/api-server";
 import { logoutAction } from "@/lib/actions/auth";
 import { requireAdmin } from "@/lib/auth";
@@ -28,6 +29,7 @@ export default async function AdminPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle scrolled />
           <Button
             variant="ghost"
             nativeButton={false}

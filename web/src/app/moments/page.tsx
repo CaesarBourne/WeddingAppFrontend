@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Nav from "@/components/wedding/Nav";
 import Footer from "@/components/wedding/Footer";
 import { MomentsGallery } from "@/components/moments/MomentsGallery";
@@ -7,16 +8,13 @@ import { getCurrentUser } from "@/lib/auth";
 import type { PagedPhotos } from "@/lib/types";
 
 export default async function MomentsPage() {
+  // The approved gallery is PUBLIC — GET /photos returns approved-only and needs
+  // no auth, so we fetch and show it to everyone. Only uploading is gated: the
+  // "Share a memory" action appears solely for authenticated (invited) guests.
   const user = await getCurrentUser();
-
-  // Interim: the backend's GET /photos still requires a JWT, so the gallery is
-  // behind the invitation login for now. When the backend makes /photos public
-  // + approved-only, fetch unconditionally and gate only the UploadModal on `user`.
-  let paged: PagedPhotos | null = null;
-  if (user) {
-    const res = await apiFetch("/photos", { params: { page: 1, pageSize: 24 } });
-    if (res.ok) paged = (await res.json()) as PagedPhotos;
-  }
+  const res = await apiFetch("/photos", { params: { page: 1, pageSize: 24 } });
+  const paged: PagedPhotos | null = res.ok ? ((await res.json()) as PagedPhotos) : null;
+  const hasPhotos = !!paged && paged.data.length > 0;
 
   return (
     <main className="min-h-screen bg-background">
@@ -32,23 +30,32 @@ export default async function MomentsPage() {
           <p className="mt-4 max-w-lg mx-auto text-muted-foreground font-light">
             Every photo and video from the celebration, gathered by everyone who was there.
           </p>
-          {user && (
-            <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center">
+            {user ? (
               <UploadModal />
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Invited guest?{" "}
+                <Link href="/login" className="text-gold underline underline-offset-4">
+                  Sign in
+                </Link>{" "}
+                to add your photos.
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
       <section className="container pb-28 md:pb-40">
-        {user && paged ? (
+        {hasPhotos ? (
           <MomentsGallery initial={paged} />
         ) : (
           <div className="mx-auto max-w-md rounded-3xl border bg-card p-10 text-center shadow-soft">
-            <p className="font-serif-display text-2xl text-foreground">Opening soon</p>
+            <p className="font-serif-display text-2xl text-foreground">No memories yet</p>
             <p className="mt-3 text-sm text-muted-foreground">
-              The shared gallery is being prepared. Invited guests can sign in with their
-              invitation QR code to view and add memories.
+              {user
+                ? "Be the first to share a photo from the celebration."
+                : "Approved photos from the celebration will appear here soon."}
             </p>
           </div>
         )}
