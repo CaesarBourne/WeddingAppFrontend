@@ -63,10 +63,43 @@ export interface UserDto {
   isActive: boolean;
   guestToken: string | null;
   buttonEnabled: boolean;
+  seatNumber: string | null;
   admissionStatus: AdmissionStatus;
   admittedAt: string | null;
   avatarUrl: string | null;
   createdAt: string;
+}
+
+export interface FoodItemDto {
+  id: string;
+  name: string;
+  description: string | null;
+  category: "food" | "drink";
+  totalPlates: number;
+  availablePlates: number;
+  isAvailable: boolean;
+  imageUrl: string | null;
+  createdAt: string;
+}
+
+export interface FoodOrderDto {
+  id: string;
+  userId: string;
+  guestName: string | null;
+  seatNumber: string | null;
+  foodItemId: string;
+  foodItemName: string | null;
+  category: "food" | "drink" | null;
+  createdAt: string;
+}
+
+export interface OrderNotification {
+  orderId: string;
+  guestName: string;
+  seatNumber: string | null;
+  foodItemName: string;
+  category: "food" | "drink";
+  orderedAt: string;
 }
 
 /** Authenticated user, decoded from GET /auth/me or a login response. */
