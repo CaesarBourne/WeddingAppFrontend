@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UtensilsCrossed, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
@@ -43,6 +43,17 @@ export default async function AdminPage() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle scrolled />
+
+          {/* My Meal — admin can also select their food/drink */}
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <Link href="/food">
+                <Utensils /> My Meal
+              </Link>
+            }
+          />
 
           {/* Scan QR — primary CTA for entrance staff */}
           <Button
