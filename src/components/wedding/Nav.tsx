@@ -15,6 +15,7 @@ const NAV: NavItem[] = [
   { id: "gallery", label: "Gallery" },
   { id: "moments", label: "Moments", href: "/moments", pill: true },
   { id: "gift", label: "Gift" },
+  { id: "admin", label: "Admin", href: "/login" },
 ];
 
 const PILL_BASE =
