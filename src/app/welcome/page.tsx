@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Image as ImageIcon, Lock } from "lucide-react";
+import { Image as ImageIcon, Lock, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
@@ -30,6 +30,18 @@ export default async function WelcomePage() {
               You&apos;re all set — browse the wedding album and add your own photos to the
               collection.
             </p>
+          </div>
+
+          <div className="grid w-full grid-cols-1 gap-3">
+            <Button
+              nativeButton={false}
+              render={
+                <Link href="/food">
+                  <UtensilsCrossed />
+                  Choose Your Meal
+                </Link>
+              }
+            />
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">

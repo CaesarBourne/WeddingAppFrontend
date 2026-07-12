@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User } from "lucide-react";
+import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
@@ -54,6 +54,15 @@ export default async function AdminPage() {
             }
           />
 
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <Link href="/admin/food">
+                <UtensilsCrossed /> Food &amp; Drinks
+              </Link>
+            }
+          />
           <Button
             variant="ghost"
             nativeButton={false}
