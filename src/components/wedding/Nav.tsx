@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 
-type NavItem = { id: string; label: string; href?: string; pill?: boolean };
+type NavItem = { id: string; label: string; href?: string };
 
 const NAV: NavItem[] = [
   { id: "story", label: "Our Story" },
@@ -13,18 +13,15 @@ const NAV: NavItem[] = [
   { id: "details", label: "Details" },
   { id: "rsvp", label: "RSVP" },
   { id: "gallery", label: "Gallery" },
-  { id: "moments", label: "Moments", href: "/moments", pill: true },
+  { id: "moments", label: "Wedding Gallery", href: "/moments" },
   { id: "gift", label: "Gift" },
   { id: "admin", label: "Admin", href: "/login" },
 ];
 
-const PILL_BASE =
-  "inline-flex items-center justify-center rounded-full text-xs uppercase tracking-[0.2em] px-4 md:px-5 py-1.5 transition-all duration-200 ease-out text-white";
-const PILL_STYLE = { backgroundColor: "#C9A46C" } as const;
-
 const Nav = () => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const pathname = usePathname();
   const onHome = pathname === "/";
 
@@ -35,76 +32,122 @@ const Nav = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Reset hash-link active state whenever the route changes
+  useEffect(() => {
+    setActiveId(null);
+  }, [pathname]);
+
+  function isActive(n: NavItem): boolean {
+    // Route-based items: match by pathname
+    if (n.href) {
+      return pathname === n.href || pathname.startsWith(`${n.href}/`);
+    }
+    // Hash/anchor items: match by manual click tracking
+    return activeId === n.id;
+  }
+
+  function handleClick(n: NavItem) {
+    setActiveId(n.id);
+    setOpen(false);
+  }
+
   const linkFor = (n: NavItem) => (n.href ? n.href : onHome ? `#${n.id}` : `/#${n.id}`);
 
   const renderLink = (n: NavItem, mobile = false) => {
-    const baseText = mobile
-      ? "text-sm uppercase tracking-[0.2em] text-foreground/80 hover:text-gold"
-      : `text-xs uppercase tracking-[0.2em] transition-colors hover:text-gold ${
-          scrolled ? "text-foreground/80" : "text-white/90"
-        }`;
+    const active = isActive(n);
 
-    if (n.pill) {
+    if (mobile) {
+      const mobileClass = `text-sm uppercase tracking-[0.2em] transition-colors ${
+        active ? "text-gold font-semibold" : "text-foreground/80 hover:text-gold"
+      }`;
+
+      if (n.href) {
+        return (
+          <Link key={n.id} href={n.href} onClick={() => handleClick(n)} className={mobileClass}>
+            {n.label}
+          </Link>
+        );
+      }
       return (
-        <Link
-          key={n.id}
-          href={n.href!}
-          onClick={() => setOpen(false)}
-          style={PILL_STYLE}
-          className={`${PILL_BASE} hover:scale-[1.02] hover:[background-color:#D4B07A]`}
-        >
+        <a key={n.id} href={linkFor(n)} onClick={() => handleClick(n)} className={mobileClass}>
           {n.label}
-        </Link>
+        </a>
       );
     }
+
+    // Desktop — all items share the same base style, with active highlighted in gold
+    let inactiveColor = "text-white/90 hover:text-gold";
+    if (scrolled || !onHome) inactiveColor = "text-foreground/80 hover:text-gold";
+    const desktopClass = `relative text-xs uppercase tracking-[0.2em] transition-colors ${
+      active ? "text-gold" : inactiveColor
+    }`;
+
+    const activeUnderline = active ? (
+      <span
+        className="absolute -bottom-1 left-0 right-0 h-px rounded-full bg-gold"
+        style={{ backgroundColor: "#C9A46C" }}
+      />
+    ) : null;
+
     if (n.href) {
       return (
-        <Link key={n.id} href={n.href} onClick={() => setOpen(false)} className={baseText}>
+        <Link key={n.id} href={n.href} onClick={() => handleClick(n)} className={desktopClass}>
           {n.label}
+          {activeUnderline}
         </Link>
       );
     }
     return (
-      <a key={n.id} href={linkFor(n)} onClick={() => setOpen(false)} className={baseText}>
+      <a key={n.id} href={linkFor(n)} onClick={() => handleClick(n)} className={desktopClass}>
         {n.label}
+        {activeUnderline}
       </a>
     );
   };
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-        scrolled || !onHome ? "py-3 glass shadow-soft" : "py-5 bg-transparent"
+      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-700 ${
+        scrolled || !onHome ? "glass py-3 shadow-soft" : "bg-transparent py-5"
       }`}
     >
       <div className="container flex items-center justify-between">
         <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-script text-2xl md:text-3xl text-gradient-gold">Emma</span>
-          <span className={`font-serif-display text-sm tracking-[0.3em] ${scrolled || !onHome ? "text-foreground" : "text-white"}`}>&</span>
-          <span className="font-script text-2xl md:text-3xl text-gradient-gold">Funmi</span>
+          <span className="font-script text-2xl text-gradient-gold md:text-3xl">Emma</span>
+          <span
+            className={`font-serif-display text-sm tracking-[0.3em] ${
+              scrolled || !onHome ? "text-foreground" : "text-white"
+            }`}
+          >
+            &amp;
+          </span>
+          <span className="font-script text-2xl text-gradient-gold md:text-3xl">Funmi</span>
         </Link>
-        <div className="hidden md:flex items-center gap-6 lg:gap-8">
+
+        <div className="hidden items-center gap-6 md:flex lg:gap-8">
           <nav className="flex items-center gap-6 lg:gap-8">
             {NAV.map((n) => renderLink(n))}
           </nav>
           <ThemeToggle scrolled={scrolled || !onHome} />
         </div>
-        <div className="md:hidden flex items-center gap-2">
+
+        <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle scrolled={scrolled || !onHome} />
           <button
             onClick={() => setOpen(!open)}
             className={`p-2 ${scrolled || !onHome ? "text-foreground" : "text-white"}`}
             aria-label="Menu"
           >
-            <div className="w-6 h-px bg-current mb-1.5" />
-            <div className="w-6 h-px bg-current mb-1.5" />
-            <div className="w-4 h-px bg-current ml-auto" />
+            <div className="mb-1.5 h-px w-6 bg-current" />
+            <div className="mb-1.5 h-px w-6 bg-current" />
+            <div className="ml-auto h-px w-4 bg-current" />
           </button>
         </div>
       </div>
+
       {open && (
-        <div className="md:hidden glass mt-3 mx-4 rounded-2xl p-6 animate-fade-up">
-          <nav className="flex flex-col gap-4 items-start">
+        <div className="glass mx-4 mt-3 animate-fade-up rounded-2xl p-6 md:hidden">
+          <nav className="flex flex-col items-start gap-4">
             {NAV.map((n) => renderLink(n, true))}
           </nav>
         </div>
