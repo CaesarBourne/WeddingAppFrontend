@@ -3,21 +3,15 @@ import Footer from "@/components/wedding/Footer";
 import { MomentsPageClient } from "@/components/moments/MomentsPageClient";
 import { apiFetch } from "@/lib/api-server";
 import { getCurrentUser } from "@/lib/auth";
-import type { PagedPhotos, PhotoDto } from "@/lib/types";
+import type { PagedPhotos } from "@/lib/types";
 
 export default async function MomentsPage() {
   const user = await getCurrentUser();
 
-  const [pagedRes, groupedRes] = await Promise.all([
-    apiFetch("/photos", { params: { page: 1, pageSize: 24 } }),
-    apiFetch("/photos", { params: { page: 1, pageSize: 100 } }),
-  ]);
-
-  const paged: PagedPhotos | null = pagedRes.ok ? ((await pagedRes.json()) as PagedPhotos) : null;
-  const groupedPaged: PagedPhotos | null = groupedRes.ok
-    ? ((await groupedRes.json()) as PagedPhotos)
-    : null;
-  const grouped: PhotoDto[] = groupedPaged?.data ?? [];
+  // Single fetch — small page so HTML reaches the browser fast.
+  // The "By Guest" grouped view loads lazily on first tab-switch (client-side).
+  const res = await apiFetch("/photos", { params: { page: 1, pageSize: 24 } });
+  const paged: PagedPhotos | null = res.ok ? ((await res.json()) as PagedPhotos) : null;
 
   return (
     <main className="min-h-screen bg-background">
@@ -32,7 +26,7 @@ export default async function MomentsPage() {
       </div>
 
       <section className="container pb-24 md:pb-36">
-        <MomentsPageClient initial={paged} grouped={grouped} user={user} />
+        <MomentsPageClient initial={paged} user={user} />
       </section>
 
       <Footer />
