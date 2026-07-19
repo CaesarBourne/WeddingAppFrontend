@@ -64,6 +64,9 @@ export function UserRow({ user }: { readonly user: UserDto }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
+          {isGuest && user.guestNumber != null && (
+            <Badge variant="outline">#{user.guestNumber}</Badge>
+          )}
           <span className="font-medium">{user.name || "—"}</span>
           <Badge variant="secondary">{user.role}</Badge>
           {isGuest &&
