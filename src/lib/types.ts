@@ -64,6 +64,7 @@ export interface UserDto {
   guestToken: string | null;
   buttonEnabled: boolean;
   seatNumber: string | null;
+  guestNumber: number | null;
   admissionStatus: AdmissionStatus;
   admittedAt: string | null;
   avatarUrl: string | null;

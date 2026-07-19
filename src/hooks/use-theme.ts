@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type Theme = "light" | "dark";
 
@@ -16,9 +16,19 @@ const getInitial = (): Theme => {
 };
 
 export const useTheme = () => {
-  const [theme, setTheme] = useState<Theme>(getInitial);
+  // Always start at "light" so the client's first render matches the server's
+  // (which has no access to localStorage/matchMedia). The inline script in
+  // layout.tsx already sets the `dark` class on <html> before paint to avoid a
+  // visual flash; this just syncs React's own state to match right after mount.
+  const [theme, setTheme] = useState<Theme>("light");
+  const mounted = useRef(false);
 
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      setTheme(getInitial());
+      return;
+    }
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
     localStorage.setItem(STORAGE_KEY, theme);

@@ -14,8 +14,8 @@ const NAV: NavItem[] = [
   { id: "rsvp", label: "RSVP" },
   { id: "gallery", label: "Gallery" },
   { id: "moments", label: "Wedding Gallery", href: "/moments" },
+  { id: "food", label: "Food", href: "/food" },
   { id: "gift", label: "Gift" },
-  { id: "admin", label: "Admin", href: "/login" },
 ];
 
 const Nav = () => {

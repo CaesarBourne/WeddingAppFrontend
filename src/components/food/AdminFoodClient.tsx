@@ -21,14 +21,15 @@ import { clientEnv } from "@/lib/env-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { FoodItemDto, FoodOrderDto } from "@/lib/types";
+import type { FoodItemDto, FoodOrderDto, UserDto } from "@/lib/types";
 
 interface Props {
   readonly initialItems: FoodItemDto[];
   readonly initialOrders: FoodOrderDto[];
+  readonly guests: UserDto[];
 }
 
-export function AdminFoodClient({ initialItems, initialOrders }: Props) {
+export function AdminFoodClient({ initialItems, initialOrders, guests }: Props) {
   const [items, setItems] = useState<FoodItemDto[]>(initialItems);
   const [orders] = useState<FoodOrderDto[]>(initialOrders);
 
@@ -49,6 +50,9 @@ export function AdminFoodClient({ initialItems, initialOrders }: Props) {
       <ItemSection title="Food" items={foods} onUpdate={handleItemUpdate} onDelete={handleItemDelete} />
       {/* Drink items */}
       <ItemSection title="Drinks" items={drinks} onUpdate={handleItemUpdate} onDelete={handleItemDelete} />
+
+      {/* Per-guest eaten status */}
+      <GuestStatusSection guests={guests} orders={orders} />
 
       {/* All orders */}
       <div className="flex flex-col gap-4">
@@ -276,4 +280,75 @@ function AdminFoodCard({
       </div>
     </div>
   );
+}
+
+function GuestStatusSection({
+  guests,
+  orders,
+}: {
+  readonly guests: UserDto[];
+  readonly orders: FoodOrderDto[];
+}) {
+  const sorted = [...guests].sort((a, b) => (a.guestNumber ?? 0) - (b.guestNumber ?? 0));
+  const eatenCount = sorted.filter((g) => guestStatus(g, orders).eaten).length;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold">
+        Guest status ({eatenCount}/{sorted.length} eaten)
+      </h2>
+      {sorted.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No guests yet.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {sorted.map((g) => {
+            const { eaten, foodName, drinkName } = guestStatus(g, orders);
+            return (
+              <div
+                key={g.id}
+                className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3"
+              >
+                <span
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded text-[10px] font-bold text-white",
+                    eaten ? "bg-red-500" : "bg-yellow-500",
+                  )}
+                  title={eaten ? "Has eaten" : "Pending"}
+                >
+                  {g.guestNumber ?? "–"}
+                </span>
+                <span className="font-medium">{g.name ?? "Unnamed guest"}</span>
+                {g.seatNumber && (
+                  <span className="text-sm text-muted-foreground">Seat {g.seatNumber}</span>
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {foodName ?? "no food"} · {drinkName ?? "no drink"}
+                </span>
+                <Badge
+                  className={cn(
+                    "ml-auto",
+                    eaten
+                      ? "border-red-500/30 bg-red-500/10 text-red-600"
+                      : "border-yellow-500/30 bg-yellow-500/10 text-yellow-600",
+                  )}
+                >
+                  {eaten ? "Eaten" : "Pending"}
+                </Badge>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function guestStatus(guest: UserDto, orders: FoodOrderDto[]) {
+  const foodOrder = orders.find((o) => o.userId === guest.id && o.category === "food");
+  const drinkOrder = orders.find((o) => o.userId === guest.id && o.category === "drink");
+  return {
+    eaten: Boolean(foodOrder && drinkOrder),
+    foodName: foodOrder?.foodItemName ?? null,
+    drinkName: drinkOrder?.foodItemName ?? null,
+  };
 }

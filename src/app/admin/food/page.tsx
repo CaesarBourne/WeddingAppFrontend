@@ -7,18 +7,21 @@ import { AdminNotificationBell } from "@/components/food/AdminNotificationBell";
 import { CreateFoodItemForm } from "@/components/food/CreateFoodItemForm";
 import { apiFetch } from "@/lib/api-server";
 import { requireAdmin } from "@/lib/auth";
-import type { FoodItemDto, FoodOrderDto } from "@/lib/types";
+import type { FoodItemDto, FoodOrderDto, UserDto } from "@/lib/types";
 
 export default async function AdminFoodPage() {
   await requireAdmin();
 
-  const [itemsRes, ordersRes] = await Promise.all([
+  const [itemsRes, ordersRes, usersRes] = await Promise.all([
     apiFetch("/food/items"),
     apiFetch("/food/orders"),
+    apiFetch("/users"),
   ]);
 
   const items: FoodItemDto[] = itemsRes.ok ? await itemsRes.json() : [];
   const orders: FoodOrderDto[] = ordersRes.ok ? await ordersRes.json() : [];
+  const users: UserDto[] = usersRes.ok ? await usersRes.json() : [];
+  const guests = users.filter((u) => u.role === "guest");
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +63,7 @@ export default async function AdminFoodPage() {
         </Card>
 
         {/* Manage items + view orders */}
-        <AdminFoodClient initialItems={items} initialOrders={orders} />
+        <AdminFoodClient initialItems={items} initialOrders={orders} guests={guests} />
       </main>
     </div>
   );
