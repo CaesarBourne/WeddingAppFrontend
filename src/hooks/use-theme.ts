@@ -6,7 +6,7 @@ export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "emma-funmi-theme";
 
-const getInitial = (): Theme => {
+export const getInitial = (): Theme => {
   if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
   if (stored === "light" || stored === "dark") return stored;
