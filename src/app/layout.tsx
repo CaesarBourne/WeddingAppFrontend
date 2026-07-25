@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Cormorant_Garamond, Great_Vibes, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeSync } from "@/components/wedding/ThemeSync";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <ThemeSync />
         {children}
         <Toaster />
       </body>
