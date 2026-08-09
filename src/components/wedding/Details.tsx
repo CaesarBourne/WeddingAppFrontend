@@ -1,13 +1,15 @@
 "use client";
 
 import { useReveal } from "@/hooks/use-reveal";
+import { useCountdown } from "@/hooks/use-countdown";
 
 // Set to a Date string when known, otherwise null
-const WEDDING_DATE: string | null = null;
+const WEDDING_DATE: string | null = "2026-10-03";
 
 const Details = () => {
   const ref = useReveal();
   const known = !!WEDDING_DATE;
+  const timeLeft = useCountdown(WEDDING_DATE ?? "2026-10-03");
 
   return (
     <section id="details" ref={ref} className="scroll-mt-nav relative py-28 md:py-40 overflow-hidden bg-background">
@@ -28,8 +30,41 @@ const Details = () => {
               {known ? (
                 <>
                   <p className="font-serif-display text-2xl md:text-3xl text-foreground/70 mb-2">Mark your hearts for</p>
-                  <p className="font-serif-display text-4xl md:text-6xl text-gradient-gold mb-8">{new Date(WEDDING_DATE!).toDateString()}</p>
-                  {/* Countdown placeholder if date is set */}
+                  <p className="font-serif-display text-4xl md:text-6xl text-gradient-gold mb-8" suppressHydrationWarning>
+                    {new Date(WEDDING_DATE!).toLocaleDateString(undefined, {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    })}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-4 gap-3 md:gap-6 max-w-xl mx-auto">
+                    {(
+                      [
+                        ["Days", timeLeft?.days],
+                        ["Hours", timeLeft?.hours],
+                        ["Minutes", timeLeft?.minutes],
+                        ["Seconds", timeLeft?.seconds],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <div key={label} className="aspect-square rounded-2xl bg-gradient-glass border border-white/40 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div
+                          className="absolute inset-0 opacity-60"
+                          style={{
+                            background: "linear-gradient(110deg, transparent 30%, hsl(var(--gold) / 0.35) 50%, transparent 70%)",
+                            backgroundSize: "200% 100%",
+                            animation: "shimmer 2.8s linear infinite",
+                          }}
+                        />
+                        <span className="relative font-serif-display text-3xl md:text-5xl text-gradient-gold tabular-nums">
+                          {value !== undefined ? String(value).padStart(2, "0") : "—"}
+                        </span>
+                        <span className="relative text-[10px] md:text-xs uppercase tracking-[0.25em] text-foreground/50 mt-1">{label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               ) : (
                 <>

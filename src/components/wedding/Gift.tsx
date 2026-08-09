@@ -1,9 +1,25 @@
 "use client";
 
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 import { useReveal } from "@/hooks/use-reveal";
+
+const ACCOUNT_NUMBER = "0068082964";
+const BANK_NAME = "Sterling Bank";
+const ACCOUNT_NAME = "Adeleke Emmanuel";
 
 const Gift = () => {
   const ref = useReveal();
+
+  async function copyAccountNumber() {
+    try {
+      await navigator.clipboard.writeText(ACCOUNT_NUMBER);
+      toast.success("Account number copied.");
+    } catch {
+      toast.error("Could not copy — please copy it manually.");
+    }
+  }
+
   return (
     <section id="gift" ref={ref} className="scroll-mt-nav relative py-28 md:py-40 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-romance opacity-60" />
@@ -23,18 +39,28 @@ const Gift = () => {
             <div className="grid sm:grid-cols-2 gap-4 text-left mb-10">
               <div className="rounded-2xl border border-border/60 bg-white/40 dark:bg-white/5 p-5">
                 <p className="text-xs uppercase tracking-[0.25em] text-foreground/50 mb-1">Bank</p>
-                <p className="font-serif-display text-lg">Emma & Funmi</p>
-                <p className="text-sm text-muted-foreground mt-1">Account · ••• ••• ••••</p>
+                <p className="font-serif-display text-lg">{BANK_NAME}</p>
+                <p className="text-sm text-muted-foreground mt-1">{ACCOUNT_NAME}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white/40 dark:bg-white/5 p-5">
-                <p className="text-xs uppercase tracking-[0.25em] text-foreground/50 mb-1">Mobile</p>
-                <p className="font-serif-display text-lg">Quick Transfer</p>
-                <p className="text-sm text-muted-foreground mt-1">Coming soon</p>
-              </div>
+              <button
+                type="button"
+                onClick={copyAccountNumber}
+                className="group rounded-2xl border border-border/60 bg-white/40 dark:bg-white/5 p-5 text-left transition-colors hover:border-gold/60"
+              >
+                <p className="text-xs uppercase tracking-[0.25em] text-foreground/50 mb-1">Account Number</p>
+                <p className="font-serif-display text-lg tracking-widest">{ACCOUNT_NUMBER}</p>
+                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                  <Copy className="size-3.5" /> Tap to copy
+                </p>
+              </button>
             </div>
 
-            <button className="px-10 py-4 bg-gradient-gold text-foreground rounded-full uppercase tracking-[0.25em] text-xs font-medium shadow-gold hover:scale-105 hover:shadow-romance transition-all duration-500 animate-glow-pulse">
-              Send a Gift
+            <button
+              type="button"
+              onClick={copyAccountNumber}
+              className="px-10 py-4 bg-gradient-gold text-foreground rounded-full uppercase tracking-[0.25em] text-xs font-medium shadow-gold hover:scale-105 hover:shadow-romance transition-all duration-500 animate-glow-pulse"
+            >
+              Copy Account Number
             </button>
           </div>
         </div>
