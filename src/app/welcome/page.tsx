@@ -3,11 +3,13 @@ import { Image as ImageIcon, Lock, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
+import { getFoodOrderingEnabledAction } from "@/lib/actions/food";
 import { requireUser } from "@/lib/auth";
 import { env } from "@/lib/env";
 
 export default async function WelcomePage() {
   const user = await requireUser();
+  const orderingEnabled = await getFoodOrderingEnabledAction();
 
   return (
     <main className="flex min-h-screen items-center justify-center p-8">
@@ -27,21 +29,27 @@ export default async function WelcomePage() {
               <span className="text-primary">{user.name ?? "Guest"}</span>
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              You&apos;re all set — browse the wedding album and add your own photos to the
-              collection.
+              You&apos;re cordially invites to the traditional wedding ceremony.
             </p>
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3">
-            <Button
-              nativeButton={false}
-              render={
-                <Link href="/food">
-                  <UtensilsCrossed />
-                  Choose Your Meal
-                </Link>
-              }
-            />
+            {orderingEnabled ? (
+              <Button
+                nativeButton={false}
+                render={
+                  <Link href="/food">
+                    <UtensilsCrossed />
+                    Choose Your Meal
+                  </Link>
+                }
+              />
+            ) : (
+              <Button disabled title="Meal selection opens on the wedding day.">
+                <Lock />
+                Choose Your Meal
+              </Button>
+            )}
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
@@ -76,7 +84,7 @@ export default async function WelcomePage() {
 
           {!user.buttonEnabled && (
             <p className="text-xs text-muted-foreground">
-              A special feature is on its way — the wedding team will unlock it for you shortly.
+              Thank you 
             </p>
           )}
         </CardContent>

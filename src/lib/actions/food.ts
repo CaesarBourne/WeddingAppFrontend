@@ -131,3 +131,31 @@ export async function getFoodItemsAction(): Promise<FoodItemDto[]> {
   if (!res.ok) return [];
   return (await res.json()) as FoodItemDto[];
 }
+
+// ── Admin: ordering on/off switch ──────────────────────────────────────────
+
+export async function getFoodOrderingEnabledAction(): Promise<boolean> {
+  const res = await apiFetch("/food/settings");
+  if (!res.ok) return false;
+  const data = (await res.json()) as { orderingEnabled: boolean };
+  return data.orderingEnabled;
+}
+
+export async function setFoodOrderingEnabledAction(
+  enabled: boolean,
+): Promise<{ error?: string; orderingEnabled?: boolean }> {
+  const res = await apiFetch("/food/settings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not update ordering status.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin/food");
+  revalidatePath("/welcome");
+  revalidatePath("/food");
+  const data = (await res.json()) as { orderingEnabled: boolean };
+  return { orderingEnabled: data.orderingEnabled };
+}

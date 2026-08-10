@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ArrowLeft, Home, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, Home, Lock, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FoodSelectionClient } from "@/components/food/FoodSelectionClient";
+import { getFoodOrderingEnabledAction } from "@/lib/actions/food";
 import { apiFetch } from "@/lib/api-server";
 import { requireUser } from "@/lib/auth";
 import { env } from "@/lib/env";
@@ -14,6 +15,7 @@ const LOGO_PATH = path.join(process.cwd(), "public", "wedding", "logo.png");
 
 export default async function FoodPage() {
   await requireUser();
+  const orderingEnabled = await getFoodOrderingEnabledAction();
 
   const [itemsRes, ordersRes] = await Promise.all([
     apiFetch("/food/items"),
@@ -72,7 +74,17 @@ export default async function FoodPage() {
           </div>
         </div>
 
-        <FoodSelectionClient items={items} initialOrders={orders} />
+        {orderingEnabled ? (
+          <FoodSelectionClient items={items} initialOrders={orders} />
+        ) : (
+          <div className="flex flex-col items-center gap-3 rounded-xl border bg-muted/30 py-16 text-center">
+            <Lock className="size-8 text-muted-foreground" />
+            <p className="font-serif-display text-lg">Meal selection isn&apos;t open yet</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              The couple will open meal selection on the wedding day. Please check back then.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

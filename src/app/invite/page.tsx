@@ -17,8 +17,8 @@ export default async function InvitePage({
   const { t } = await searchParams;
   const user = await getCurrentUser();
 
-  if (user) {
-    if (isAdmin(user) && t) {
+  if (user && isAdmin(user)) {
+    if (t) {
       const res = await apiFetch("/auth/guest-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28,8 +28,16 @@ export default async function InvitePage({
         const info = (await res.json()) as GuestInfo;
         redirect(`/admin/qr/${info.id}`);
       }
-      redirect("/admin");
     }
+    redirect("/admin");
+  }
+
+  // A guest session may already be active on this device (e.g. a staff phone
+  // that scanned a previous guest's code). If a token is present it always
+  // wins — (re)authenticate as THAT guest rather than silently keeping
+  // whoever is currently logged in. Only skip straight to /welcome when
+  // there's no token to process at all.
+  if (user && !t) {
     redirect("/welcome");
   }
 

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminFoodClient } from "@/components/food/AdminFoodClient";
 import { AdminNotificationBell } from "@/components/food/AdminNotificationBell";
 import { CreateFoodItemForm } from "@/components/food/CreateFoodItemForm";
+import { OrderingToggle } from "@/components/food/OrderingToggle";
+import { getFoodOrderingEnabledAction } from "@/lib/actions/food";
 import { apiFetch } from "@/lib/api-server";
 import { requireAdmin } from "@/lib/auth";
 import type { FoodItemDto, FoodOrderDto, UserDto } from "@/lib/types";
@@ -12,10 +14,11 @@ import type { FoodItemDto, FoodOrderDto, UserDto } from "@/lib/types";
 export default async function AdminFoodPage() {
   await requireAdmin();
 
-  const [itemsRes, ordersRes, usersRes] = await Promise.all([
+  const [itemsRes, ordersRes, usersRes, orderingEnabled] = await Promise.all([
     apiFetch("/food/items"),
     apiFetch("/food/orders"),
     apiFetch("/users"),
+    getFoodOrderingEnabledAction(),
   ]);
 
   const items: FoodItemDto[] = itemsRes.ok ? await itemsRes.json() : [];
@@ -50,7 +53,8 @@ export default async function AdminFoodPage() {
       </header>
 
       <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
-        {/* Add item */}
+        {/* Guest ordering on/off */}
+        <OrderingToggle initialEnabled={orderingEnabled} />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
