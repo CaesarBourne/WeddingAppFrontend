@@ -29,7 +29,7 @@ export default async function WelcomePage() {
               <span className="text-primary">{user.name ?? "Guest"}</span>
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              You&apos;re cordially invites to the traditional wedding ceremony.
+              You&apos;re cordially invited to the traditional wedding ceremony of Funmi and Emmanuel.
             </p>
           </div>
 
