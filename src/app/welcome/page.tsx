@@ -15,9 +15,12 @@ export default async function WelcomePage() {
     <main className="flex min-h-screen items-center justify-center p-8">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <Link
+            href="/"
+            className="text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+          >
             {env.NEXT_PUBLIC_WEDDING_DATE} · {env.NEXT_PUBLIC_COUPLE_NAMES}
-          </p>
+          </Link>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
           <AvatarUpload userId={user.id} />

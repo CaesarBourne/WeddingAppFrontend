@@ -54,10 +54,10 @@ export default async function FoodPage() {
             </Link>
           }
         />
-        <div>
+        <Link href="/" className="hover:opacity-80 transition-opacity">
           <p className="font-serif-display text-lg">{env.NEXT_PUBLIC_COUPLE_NAMES}</p>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Meal Selection</p>
-        </div>
+        </Link>
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-8">
