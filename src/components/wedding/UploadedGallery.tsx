@@ -49,15 +49,21 @@ export function UploadedGallery({ initial }: { readonly initial: PagedPhotos }) 
   const photos = initial.data;
 
   return (
-    <section id="shared-gallery" ref={ref} className="scroll-mt-nav relative py-28 md:py-40 bg-background overflow-hidden">
+    <section id="shared-gallery" ref={ref} className="scroll-mt-nav relative py-10 md:py-14 bg-background overflow-hidden">
       <div className="container relative">
-        <div className="text-center mb-14 reveal">
-          <p className="font-script text-3xl md:text-4xl text-gradient-gold mb-2">shared with love</p>
-          <h2 className="font-serif-display text-4xl md:text-6xl">Our Wedding Gallery</h2>
-          <div className="mx-auto mt-6 h-px w-24 bg-gradient-gold" />
-          <p className="mx-auto mt-6 max-w-xl text-sm text-muted-foreground md:text-base">
-            Photos and videos shared by us and our guests, all in one place.
-          </p>
+        <div className="reveal mb-5 flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="font-serif-display text-2xl md:text-3xl">
+            <span className="font-script text-gradient-gold mr-2">shared with love</span>
+            Our Wedding Gallery
+          </h2>
+          <Link
+            href="/moments"
+            className="group inline-flex shrink-0 items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-gold transition-colors hover:text-foreground"
+          >
+            <Images className="size-4" />
+            View Full Gallery
+            <span className="transition-transform group-hover:translate-x-1">→</span>
+          </Link>
         </div>
 
         {photos.length === 0 ? (
@@ -65,23 +71,12 @@ export function UploadedGallery({ initial }: { readonly initial: PagedPhotos }) 
             No shared memories yet — check back after the celebration.
           </p>
         ) : (
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-6 md:gap-3">
             {photos.slice(0, 12).map((photo, i) => (
               <Tile key={photo.id} photo={photo} onOpen={() => setLightboxIndex(i)} />
             ))}
           </div>
         )}
-
-        <div className="reveal mt-14 flex justify-center">
-          <Link
-            href="/moments"
-            className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-gold px-10 py-4 text-xs font-medium uppercase tracking-[0.25em] text-foreground shadow-gold transition-all duration-500 hover:scale-105 hover:shadow-romance"
-          >
-            <Images className="size-4" />
-            View Full Gallery
-            <span className="transition-transform group-hover:translate-x-1">→</span>
-          </Link>
-        </div>
       </div>
 
       {lightboxIndex !== null && (
