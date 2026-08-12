@@ -35,12 +35,12 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b p-4">
-        <div>
+        <Link href="/" className="hover:opacity-80 transition-opacity">
           <p className="font-serif-display text-xl">{env.NEXT_PUBLIC_COUPLE_NAMES}</p>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Guest Management
           </p>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle scrolled />
 

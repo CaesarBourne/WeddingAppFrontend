@@ -4,7 +4,6 @@ import Story from "@/components/wedding/Story";
 import Proposal from "@/components/wedding/Proposal";
 import Details from "@/components/wedding/Details";
 import { UploadedGallery } from "@/components/wedding/UploadedGallery";
-import Rsvp from "@/components/wedding/Rsvp";
 import Gallery from "@/components/wedding/Gallery";
 import VideoSection from "@/components/wedding/VideoSection";
 import Gift from "@/components/wedding/Gift";
@@ -26,7 +25,6 @@ export default async function Home() {
       <Proposal />
       <Details />
       <UploadedGallery initial={paged} />
-      <Rsvp />
       <Gallery />
       <VideoSection />
       <Gift />

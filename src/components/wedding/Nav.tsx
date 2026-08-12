@@ -11,7 +11,6 @@ const NAV: NavItem[] = [
   { id: "story", label: "Our Story" },
   { id: "proposal", label: "The Proposal" },
   { id: "details", label: "Details" },
-  { id: "rsvp", label: "RSVP" },
   { id: "gallery", label: "Gallery" },
   { id: "moments", label: "Wedding Gallery", href: "/moments" },
   { id: "food", label: "Food", href: "/food" },

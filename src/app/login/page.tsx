@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -12,7 +13,11 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>{env.NEXT_PUBLIC_COUPLE_NAMES}</CardTitle>
+          <CardTitle>
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              {env.NEXT_PUBLIC_COUPLE_NAMES}
+            </Link>
+          </CardTitle>
           <CardDescription>Sign in to manage guests and admissions.</CardDescription>
         </CardHeader>
         <CardContent>
