@@ -5,6 +5,9 @@ import QRCode from "qrcode";
 import { Check, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const QR_DARK = "#4A1030";
+const QR_LIGHT = "#FFFFFF";
+
 export function QrCell({ token }: { token: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
@@ -18,7 +21,7 @@ export function QrCell({ token }: { token: string }) {
       QRCode.toCanvas(canvasRef.current, url, {
         width: 160,
         margin: 1,
-        color: { dark: "#1a1a1a", light: "#ffffff" },
+        color: { dark: QR_DARK, light: QR_LIGHT },
       });
     }
   }, [url]);
@@ -28,7 +31,7 @@ export function QrCell({ token }: { token: string }) {
     QRCode.toDataURL(url, {
       width: 512,
       margin: 2,
-      color: { dark: "#000000", light: "#FFFFFF" },
+      color: { dark: QR_DARK, light: QR_LIGHT },
     }).then((dataUrl) => {
       const a = document.createElement("a");
       a.href = dataUrl;

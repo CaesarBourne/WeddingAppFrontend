@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Image as ImageIcon, Lock, UtensilsCrossed } from "lucide-react";
+import { Home, Image as ImageIcon, Lock, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
@@ -37,6 +37,44 @@ export default async function WelcomePage() {
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link href="/">
+                  <Home />
+                  Dashboard
+                </Link>
+              }
+            />
+          </div>
+
+          {!user.photosBlocked && (
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              <Button
+                nativeButton={false}
+                render={
+                  <Link href="/moments">
+                    <ImageIcon />
+                    View Gallery
+                  </Link>
+                }
+              />
+
+              <Button
+                variant="secondary"
+                nativeButton={false}
+                render={
+                  <Link href="/moments?myAlbum=true">
+                    <ImageIcon />
+                    My Photos
+                  </Link>
+                }
+              />
+            </div>
+          )}
+
+          <div className="grid w-full grid-cols-1 gap-3">
             {orderingEnabled ? (
               <Button
                 nativeButton={false}
@@ -54,42 +92,6 @@ export default async function WelcomePage() {
               </Button>
             )}
           </div>
-
-          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-            <Button
-              nativeButton={false}
-              render={
-                <Link href="/moments">
-                  <ImageIcon />
-                  View Gallery
-                </Link>
-              }
-            />
-
-            {user.buttonEnabled ? (
-              <Button
-                variant="secondary"
-                nativeButton={false}
-                render={
-                  <Link href="/moments?myAlbum=true">
-                    <ImageIcon />
-                    My Photos
-                  </Link>
-                }
-              />
-            ) : (
-              <Button variant="secondary" disabled title="Coming soon — stay tuned!">
-                <Lock />
-                Coming Soon
-              </Button>
-            )}
-          </div>
-
-          {!user.buttonEnabled && (
-            <p className="text-xs text-muted-foreground">
-              Thank you 
-            </p>
-          )}
         </CardContent>
       </Card>
     </main>
