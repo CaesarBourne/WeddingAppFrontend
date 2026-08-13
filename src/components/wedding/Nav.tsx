@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { logoutAction } from "@/lib/actions/auth";
 import ThemeToggle from "./ThemeToggle";
 
 type NavItem = { id: string; label: string; href?: string };
@@ -17,7 +19,26 @@ const NAV: NavItem[] = [
   { id: "gift", label: "Gift" },
 ];
 
-const Nav = () => {
+function LogoutButton({ scrolled }: { readonly scrolled: boolean }) {
+  return (
+    <form action={logoutAction}>
+      <button
+        type="submit"
+        title="Sign out"
+        aria-label="Sign out"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-500 hover:shadow-gold ${
+          scrolled
+            ? "border-border/60 bg-background/40 text-foreground"
+            : "border-white/30 bg-white/10 text-white backdrop-blur-md"
+        }`}
+      >
+        <LogOut className="h-4 w-4" />
+      </button>
+    </form>
+  );
+}
+
+const Nav = ({ loggedIn = false }: { readonly loggedIn?: boolean }) => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -128,10 +149,12 @@ const Nav = () => {
             {NAV.map((n) => renderLink(n))}
           </nav>
           <ThemeToggle scrolled={scrolled || !onHome} />
+          {loggedIn && <LogoutButton scrolled={scrolled || !onHome} />}
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle scrolled={scrolled || !onHome} />
+          {loggedIn && <LogoutButton scrolled={scrolled || !onHome} />}
           <button
             onClick={() => setOpen(!open)}
             className={`p-2 ${scrolled || !onHome ? "text-foreground" : "text-white"}`}

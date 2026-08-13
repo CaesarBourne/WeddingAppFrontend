@@ -14,7 +14,7 @@ export default async function MomentsPage() {
   if (user?.role === "guest" && user.photosBlocked) {
     return (
       <main className="min-h-screen bg-background">
-        <Nav />
+        <Nav loggedIn={!!user} />
         <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
           <Lock className="size-8 text-muted-foreground" />
           <p className="font-serif-display text-lg">Gallery access is unavailable for you</p>
