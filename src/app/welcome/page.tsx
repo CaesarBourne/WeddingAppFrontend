@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Home, Image as ImageIcon, Lock, UtensilsCrossed } from "lucide-react";
+import { Home, Image as ImageIcon, Lock, LogOut, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
+import { logoutAction } from "@/lib/actions/auth";
 import { getFoodOrderingEnabledAction } from "@/lib/actions/food";
 import { requireUser } from "@/lib/auth";
 import { env } from "@/lib/env";
@@ -14,13 +15,18 @@ export default async function WelcomePage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-8">
       <Card className="w-full max-w-md text-center">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <Link
             href="/"
             className="text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
           >
             {env.NEXT_PUBLIC_WEDDING_DATE} · {env.NEXT_PUBLIC_COUPLE_NAMES}
           </Link>
+          <form action={logoutAction}>
+            <Button type="submit" variant="ghost" size="icon" title="Sign out">
+              <LogOut />
+            </Button>
+          </form>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
           <AvatarUpload userId={user.id} />
