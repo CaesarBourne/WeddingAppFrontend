@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import Nav from "@/components/wedding/Nav";
 import Footer from "@/components/wedding/Footer";
 import { MomentsPageClient } from "@/components/moments/MomentsPageClient";
@@ -7,6 +8,24 @@ import type { PagedPhotos } from "@/lib/types";
 
 export default async function MomentsPage() {
   const user = await getCurrentUser();
+
+  // Blocked guests can't view the gallery even by navigating here directly —
+  // the "View Gallery"/"My Photos" buttons being hidden is not enforcement.
+  if (user?.role === "guest" && user.photosBlocked) {
+    return (
+      <main className="min-h-screen bg-background">
+        <Nav />
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+          <Lock className="size-8 text-muted-foreground" />
+          <p className="font-serif-display text-lg">Gallery access is unavailable for you</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Please reach out to the couple if you think this is a mistake.
+          </p>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   // Single fetch — small page so HTML reaches the browser fast.
   // The "By Guest" grouped view loads lazily on first tab-switch (client-side).

@@ -62,7 +62,7 @@ export interface UserDto {
   role: string;
   isActive: boolean;
   guestToken: string | null;
-  buttonEnabled: boolean;
+  photosBlocked: boolean;
   seatNumber: string | null;
   guestNumber: number | null;
   admissionStatus: AdmissionStatus;
@@ -110,6 +110,6 @@ export interface AuthUser {
   email: string | null;
   name?: string;
   role: "guest" | "admin" | "super_admin";
-  buttonEnabled: boolean;
+  photosBlocked: boolean;
   jti?: string;
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, MapPin, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
+import { Ban, Loader2, MapPin, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteGuestAction, toggleGuestButtonAction } from "@/lib/actions/users";
+import { deleteGuestAction, togglePhotosBlockedAction } from "@/lib/actions/users";
 import { setSeatNumberAction } from "@/lib/actions/food";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import type { UserDto } from "@/lib/types";
 
 export function UserRow({ user }: { readonly user: UserDto }) {
   const [deleting, setDeleting] = useState(false);
-  const [toggling, setToggling] = useState(false);
+  const [togglingBlock, setTogglingBlock] = useState(false);
   const [editingSeat, setEditingSeat] = useState(false);
   const [seatValue, setSeatValue] = useState(user.seatNumber ?? "");
   const [savingSeat, setSavingSeat] = useState(false);
@@ -44,19 +44,17 @@ export function UserRow({ user }: { readonly user: UserDto }) {
     }
   }
 
-  async function handleToggleButton() {
-    setToggling(true);
-    const next = !user.buttonEnabled;
-    const result = await toggleGuestButtonAction(user.id, next);
-    if ("error" in result) {
+  async function handleToggleBlock() {
+    setTogglingBlock(true);
+    const next = !user.photosBlocked;
+    const result = await togglePhotosBlockedAction(user.id, next);
+    if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success(`Second button ${next ? "enabled" : "disabled"} for ${user.name}.`);
+      toast.success(next ? `${user.name} can no longer view the gallery.` : `${user.name} can view the gallery again.`);
     }
-    setToggling(false);
+    setTogglingBlock(false);
   }
-
-  const ToggleIcon = user.buttonEnabled ? ToggleRight : ToggleLeft;
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
@@ -75,6 +73,7 @@ export function UserRow({ user }: { readonly user: UserDto }) {
             ) : (
               <Badge variant="outline">Pending</Badge>
             ))}
+          {isGuest && user.photosBlocked && <Badge variant="destructive">Gallery blocked</Badge>}
         </div>
         {user.email && <span className="text-sm text-muted-foreground">{user.email}</span>}
         {isGuest && (
@@ -118,14 +117,23 @@ export function UserRow({ user }: { readonly user: UserDto }) {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={handleToggleButton}
-            disabled={toggling}
+            onClick={handleToggleBlock}
+            disabled={togglingBlock}
             title={
-              user.buttonEnabled ? "Disable guest's second button" : "Enable guest's second button"
+              user.photosBlocked
+                ? "Unblock — let this guest view the gallery again"
+                : "Block this guest from viewing the gallery"
             }
+            className={user.photosBlocked ? "text-destructive hover:text-destructive" : undefined}
           >
-            {toggling ? <Loader2 className="animate-spin" /> : <ToggleIcon />}
-            {user.buttonEnabled ? "Button on" : "Button off"}
+            {togglingBlock ? (
+              <Loader2 className="animate-spin" />
+            ) : user.photosBlocked ? (
+              <Ban />
+            ) : (
+              <ShieldCheck />
+            )}
+            {user.photosBlocked ? "Blocked" : "Block gallery"}
           </Button>
 
           <Button

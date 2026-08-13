@@ -48,14 +48,14 @@ export async function deleteGuestAction(guestId: string): Promise<ActionState> {
   return {};
 }
 
-export async function toggleGuestButtonAction(
+export async function togglePhotosBlockedAction(
   guestId: string,
-  enabled: boolean,
+  blocked: boolean,
 ): Promise<ActionState> {
-  const res = await apiFetch(`/users/guests/${guestId}/button`, {
+  const res = await apiFetch(`/users/guests/${guestId}/photos-block`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ enabled }),
+    body: JSON.stringify({ blocked }),
   });
   if (!res.ok) {
     const err = await parseApiError(res, "Could not update guest.");
