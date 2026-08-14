@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ImagePlus,
   Loader2,
+  MapPin,
   MinusCircle,
   PlusCircle,
   Trash2,
@@ -13,6 +14,7 @@ import {
 import { toast } from "sonner";
 import {
   deleteFoodItemAction,
+  setSeatNumberAction,
   updateFoodItemAction,
   uploadFoodImageAction,
 } from "@/lib/actions/food";
@@ -20,6 +22,7 @@ import { buildApiUrl } from "@/lib/api-client";
 import { clientEnv } from "@/lib/env-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { FoodItemDto, FoodOrderDto, UserDto } from "@/lib/types";
 
@@ -32,6 +35,7 @@ interface Props {
 export function AdminFoodClient({ initialItems, initialOrders, guests }: Props) {
   const [items, setItems] = useState<FoodItemDto[]>(initialItems);
   const [orders] = useState<FoodOrderDto[]>(initialOrders);
+  const [guestList, setGuestList] = useState<UserDto[]>(guests);
 
   const foods = items.filter((i) => i.category === "food");
   const drinks = items.filter((i) => i.category === "drink");
@@ -44,6 +48,10 @@ export function AdminFoodClient({ initialItems, initialOrders, guests }: Props) 
     setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
+  function handleGuestUpdate(guestId: string, seatNumber: string | null) {
+    setGuestList((prev) => prev.map((g) => (g.id === guestId ? { ...g, seatNumber } : g)));
+  }
+
   return (
     <div className="flex flex-col gap-10">
       {/* Food items */}
@@ -52,7 +60,7 @@ export function AdminFoodClient({ initialItems, initialOrders, guests }: Props) 
       <ItemSection title="Drinks" items={drinks} onUpdate={handleItemUpdate} onDelete={handleItemDelete} />
 
       {/* Per-guest eaten status */}
-      <GuestStatusSection guests={guests} orders={orders} />
+      <GuestStatusSection guests={guestList} orders={orders} onSeatUpdate={handleGuestUpdate} />
 
       {/* All orders */}
       <div className="flex flex-col gap-4">
@@ -285,9 +293,11 @@ function AdminFoodCard({
 function GuestStatusSection({
   guests,
   orders,
+  onSeatUpdate,
 }: {
   readonly guests: UserDto[];
   readonly orders: FoodOrderDto[];
+  readonly onSeatUpdate: (guestId: string, seatNumber: string | null) => void;
 }) {
   const sorted = [...guests].sort((a, b) => (a.guestNumber ?? 0) - (b.guestNumber ?? 0));
   const eatenCount = sorted.filter((g) => guestStatus(g, orders).eaten).length;
@@ -318,9 +328,7 @@ function GuestStatusSection({
                   {g.guestNumber ?? "–"}
                 </span>
                 <span className="font-medium">{g.name ?? "Unnamed guest"}</span>
-                {g.seatNumber && (
-                  <span className="text-sm text-muted-foreground">Seat {g.seatNumber}</span>
-                )}
+                <SeatEditor guest={g} onSeatUpdate={onSeatUpdate} />
                 <span className="text-sm text-muted-foreground">
                   {foodName ?? "no food"} · {drinkName ?? "no drink"}
                 </span>
@@ -340,6 +348,73 @@ function GuestStatusSection({
         </div>
       )}
     </div>
+  );
+}
+
+function SeatEditor({
+  guest,
+  onSeatUpdate,
+}: {
+  readonly guest: UserDto;
+  readonly onSeatUpdate: (guestId: string, seatNumber: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(guest.seatNumber ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    const seatNumber = value.trim() || null;
+    const result = await setSeatNumberAction(guest.id, seatNumber);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      onSeatUpdate(guest.id, seatNumber);
+      toast.success(`Seat updated for ${guest.name ?? "guest"}.`);
+      setEditing(false);
+    }
+    setSaving(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Seat no."
+          className="h-6 w-20 px-1.5 py-0 text-xs"
+          maxLength={20}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void handleSave();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={saving}
+          className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button type="button" onClick={() => setEditing(false)} className="text-xs hover:underline">
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline"
+    >
+      <MapPin className="size-3.5" />
+      {guest.seatNumber ? `Seat ${guest.seatNumber}` : "Set seat"}
+    </button>
   );
 }
 
