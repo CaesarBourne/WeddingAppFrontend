@@ -111,5 +111,6 @@ export interface AuthUser {
   name?: string;
   role: "guest" | "admin" | "super_admin";
   photosBlocked: boolean;
+  seatNumber?: string | null;
   jti?: string;
 }
