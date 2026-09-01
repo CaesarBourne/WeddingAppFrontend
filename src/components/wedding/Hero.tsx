@@ -3,14 +3,19 @@ const heroImg = "/wedding/proposal-1.jpeg";
 const Hero = () => {
   return (
     <section id="top" className="relative h-screen min-h-[640px] w-full overflow-hidden">
+      {/* Full-bleed, full-width photo. Portrait photo (837x1280) scaled to
+          cover the whole section — position biases toward the top third
+          where both faces are, since a wide/short viewport only ever shows
+          a narrow horizontal band of a tall photo. */}
       <div
         className="absolute inset-0 animate-ken-burns"
         style={{
           backgroundImage: `url(${heroImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center 20%",
         }}
       />
+
       <div
         className="absolute inset-0"
         style={{ background: "var(--gradient-hero-overlay)" }}
