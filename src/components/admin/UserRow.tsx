@@ -1,23 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, Loader2, MapPin, ShieldCheck, Trash2 } from "lucide-react";
+import { Ban, Loader2, MapPin, ShieldCheck, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { deleteGuestAction, togglePhotosBlockedAction } from "@/lib/actions/users";
+import { deleteGuestAction, setGuestSeatGroupAction, togglePhotosBlockedAction } from "@/lib/actions/users";
 import { setSeatNumberAction } from "@/lib/actions/food";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/admin/UserAvatar";
 import { QrCell } from "@/components/admin/QrCell";
-import type { UserDto } from "@/lib/types";
+import type { SeatGroupDto, UserDto } from "@/lib/types";
 
-export function UserRow({ user }: { readonly user: UserDto }) {
+const MAX_GUESTS_PER_SEAT_GROUP = 8;
+
+export function UserRow({
+  user,
+  seatGroups,
+}: {
+  readonly user: UserDto;
+  readonly seatGroups: SeatGroupDto[];
+}) {
   const [deleting, setDeleting] = useState(false);
   const [togglingBlock, setTogglingBlock] = useState(false);
   const [editingSeat, setEditingSeat] = useState(false);
   const [seatValue, setSeatValue] = useState(user.seatNumber ?? "");
   const [savingSeat, setSavingSeat] = useState(false);
+  const [savingSeatGroup, setSavingSeatGroup] = useState(false);
   const isGuest = user.role === "guest";
 
   async function handleSaveSeat() {
@@ -30,6 +39,17 @@ export function UserRow({ user }: { readonly user: UserDto }) {
       setEditingSeat(false);
     }
     setSavingSeat(false);
+  }
+
+  async function handleSeatGroupChange(seatGroupId: string) {
+    setSavingSeatGroup(true);
+    const result = await setGuestSeatGroupAction(user.id, seatGroupId || null);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(`Seat group updated for ${user.name}.`);
+    }
+    setSavingSeatGroup(false);
   }
 
   async function handleDelete() {
@@ -105,6 +125,28 @@ export function UserRow({ user }: { readonly user: UserDto }) {
                 {user.seatNumber ? `Seat ${user.seatNumber}` : "Set seat"}
               </button>
             )}
+          </div>
+        )}
+        {isGuest && (
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Users className="size-3.5 shrink-0" />
+            <select
+              value={user.seatGroup?.id ?? ""}
+              onChange={(e) => void handleSeatGroupChange(e.target.value)}
+              disabled={savingSeatGroup}
+              className="h-6 rounded-md border border-input bg-transparent px-1 text-xs outline-none disabled:opacity-50"
+            >
+              <option value="">No seat group</option>
+              {seatGroups.map((group) => {
+                const isCurrent = group.id === user.seatGroup?.id;
+                const isFull = group.guestCount >= MAX_GUESTS_PER_SEAT_GROUP && !isCurrent;
+                return (
+                  <option key={group.id} value={group.id} disabled={isFull}>
+                    {group.name} ({group.guestCount}/{MAX_GUESTS_PER_SEAT_GROUP}){isFull ? " — full" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
         )}
       </div>

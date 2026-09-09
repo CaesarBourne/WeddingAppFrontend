@@ -54,6 +54,14 @@ export interface GuestInfo {
   avatarUrl: string | null;
 }
 
+/** Seat group record returned by GET /users/seat-groups. */
+export interface SeatGroupDto {
+  id: string;
+  name: string;
+  guestCount: number;
+  createdAt?: string;
+}
+
 /** Full user record returned by GET /users and GET /users/:id. */
 export interface UserDto {
   id: string;
@@ -64,6 +72,7 @@ export interface UserDto {
   guestToken: string | null;
   photosBlocked: boolean;
   seatNumber: string | null;
+  seatGroup: { id: string; name: string } | null;
   guestNumber: number | null;
   admissionStatus: AdmissionStatus;
   admittedAt: string | null;
@@ -112,5 +121,6 @@ export interface AuthUser {
   role: "guest" | "admin" | "super_admin";
   photosBlocked: boolean;
   seatNumber?: string | null;
+  seatGroupName?: string | null;
   jti?: string;
 }

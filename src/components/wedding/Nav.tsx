@@ -10,13 +10,13 @@ import ThemeToggle from "./ThemeToggle";
 type NavItem = { id: string; label: string; href?: string };
 
 const NAV: NavItem[] = [
+  { id: "moments", label: "Wedding Gallery", href: "/moments" },
+  { id: "food", label: "Food", href: "/food" },
+  { id: "gift", label: "Gift" },
   { id: "story", label: "Our Story" },
   { id: "proposal", label: "The Proposal" },
   { id: "details", label: "Details" },
   { id: "gallery", label: "Gallery" },
-  { id: "moments", label: "Wedding Gallery", href: "/moments" },
-  { id: "food", label: "Food", href: "/food" },
-  { id: "gift", label: "Gift" },
 ];
 
 function LogoutButton({ scrolled }: { readonly scrolled: boolean }) {
