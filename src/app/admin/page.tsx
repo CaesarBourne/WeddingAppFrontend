@@ -1,24 +1,26 @@
 import Link from "next/link";
-import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UtensilsCrossed, Utensils } from "lucide-react";
+import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, Users, UtensilsCrossed, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
 import { CreateAdminForm } from "@/components/admin/CreateAdminForm";
 import { AdminRow } from "@/components/admin/AdminRow";
 import { UserRow } from "@/components/admin/UserRow";
+import { SeatGroupsPanel } from "@/components/admin/SeatGroupsPanel";
 import ThemeToggle from "@/components/wedding/ThemeToggle";
 import { apiFetch } from "@/lib/api-server";
 import { logoutAction } from "@/lib/actions/auth";
 import { getCurrentUser, requireAdmin, isSuperAdmin } from "@/lib/auth";
 import { env } from "@/lib/env";
-import type { UserDto } from "@/lib/types";
+import type { SeatGroupDto, UserDto } from "@/lib/types";
 
 export default async function AdminPage() {
   await requireAdmin();
 
-  const [meRes, usersRes] = await Promise.all([
+  const [meRes, usersRes, seatGroupsRes] = await Promise.all([
     apiFetch("/auth/me"),
     apiFetch("/users"),
+    apiFetch("/users/seat-groups"),
   ]);
 
   const meRaw = meRes.ok ? ((await meRes.json()) as { sub: string; id?: string }) : null;
@@ -27,6 +29,7 @@ export default async function AdminPage() {
   const users: UserDto[] = usersRes.ok ? await usersRes.json() : [];
   const guests = users.filter((u) => u.role === "guest");
   const adminAccounts = users.filter((u) => u.role === "admin" || u.role === "super_admin");
+  const seatGroups: SeatGroupDto[] = seatGroupsRes.ok ? await seatGroupsRes.json() : [];
 
   // Re-derive super_admin status from the session for conditional UI
   const me = await getCurrentUser();
@@ -117,6 +120,18 @@ export default async function AdminPage() {
           </CardContent>
         </Card>
 
+        {/* Seat groups */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="text-primary" /> Seat groups
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SeatGroupsPanel seatGroups={seatGroups} />
+          </CardContent>
+        </Card>
+
         {/* Guest list */}
         <Card>
           <CardHeader>
@@ -128,7 +143,7 @@ export default async function AdminPage() {
             {guests.length === 0 ? (
               <p className="text-sm text-muted-foreground">No guests yet — create one above.</p>
             ) : (
-              guests.map((u) => <UserRow key={u.id} user={u} />)
+              guests.map((u) => <UserRow key={u.id} user={u} seatGroups={seatGroups} />)
             )}
           </CardContent>
         </Card>

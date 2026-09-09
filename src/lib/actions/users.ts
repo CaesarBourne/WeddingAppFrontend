@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { parseApiError } from "@/lib/api-client";
 import { apiFetch } from "@/lib/api-server";
 import type { ActionState } from "@/lib/actions/auth";
+import type { SeatGroupDto } from "@/lib/types";
 
 export async function uploadMyAvatarAction(
   _prevState: ActionState,
@@ -118,6 +119,55 @@ export async function deleteAdminAction(adminId: string): Promise<ActionState> {
   const res = await apiFetch(`/users/admins/${adminId}`, { method: "DELETE" });
   if (!res.ok) {
     const err = await parseApiError(res, "Could not remove admin.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
+// ── Admin: seat groups ──────────────────────────────────────────────────────
+
+export async function getSeatGroupsAction(): Promise<SeatGroupDto[]> {
+  const res = await apiFetch("/users/seat-groups");
+  if (!res.ok) return [];
+  return (await res.json()) as SeatGroupDto[];
+}
+
+export async function createSeatGroupAction(name: string): Promise<{ error?: string }> {
+  const res = await apiFetch("/users/seat-groups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not create seat group.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function deleteSeatGroupAction(id: string): Promise<{ error?: string }> {
+  const res = await apiFetch(`/users/seat-groups/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not delete seat group.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function setGuestSeatGroupAction(
+  guestId: string,
+  seatGroupId: string | null,
+): Promise<{ error?: string }> {
+  const res = await apiFetch(`/users/guests/${guestId}/seat-group`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seatGroupId }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not update seat group.");
     return { error: err.message };
   }
   revalidatePath("/admin");

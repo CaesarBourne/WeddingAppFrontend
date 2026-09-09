@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Image as ImageIcon, Lock, LogOut, MapPin, UtensilsCrossed } from "lucide-react";
+import { Home, Image as ImageIcon, Lock, LogOut, MapPin, Users, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
@@ -40,11 +40,21 @@ export default async function WelcomePage() {
             <p className="mt-3 text-sm text-muted-foreground">
               You&apos;re cordially invited to the traditional wedding ceremony of Funmi and Emmanuel.
             </p>
-            {user.seatNumber && (
-              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                <MapPin className="size-4" />
-                Seat {user.seatNumber}
-              </p>
+            {(user.seatNumber || user.seatGroupName) && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {user.seatNumber && (
+                  <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                    <MapPin className="size-4" />
+                    Seat {user.seatNumber}
+                  </p>
+                )}
+                {user.seatGroupName && (
+                  <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                    <Users className="size-4" />
+                    {user.seatGroupName}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
