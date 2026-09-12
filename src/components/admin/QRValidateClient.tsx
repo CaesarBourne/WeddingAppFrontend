@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Clock, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Loader2, MapPin, ShieldCheck, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { admitGuestAction } from "@/lib/actions/users";
 import { timeAgo } from "@/lib/timeAgo";
@@ -19,6 +19,8 @@ interface Props {
   avatarUrl: string | null;
   admissionStatus: "pending" | "admitted";
   admittedAt: string | null;
+  seatNumber: string | null;
+  seatGroupName: string | null;
 }
 
 export function QRValidateClient({
@@ -27,6 +29,8 @@ export function QRValidateClient({
   avatarUrl,
   admissionStatus,
   admittedAt: initialAdmittedAt,
+  seatNumber,
+  seatGroupName,
 }: Props) {
   const [ringState, setRingState] = useState<RingState>(
     admissionStatus === "admitted" ? "already_admitted" : "pending",
@@ -84,6 +88,22 @@ export function QRValidateClient({
         <Badge variant="secondary" className="mt-1">
           Wedding Guest
         </Badge>
+        {(seatNumber || seatGroupName) && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            {seatNumber && (
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                <MapPin className="size-4" />
+                Seat {seatNumber}
+              </p>
+            )}
+            {seatGroupName && (
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                <Users className="size-4" />
+                {seatGroupName}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {ringState === "pending" && (
