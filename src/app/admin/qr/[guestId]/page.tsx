@@ -43,6 +43,8 @@ export default async function QrValidatePage({
           avatarUrl={guest.avatarUrl}
           admissionStatus={guest.admissionStatus}
           admittedAt={guest.admittedAt}
+          seatNumber={guest.seatNumber}
+          seatGroupName={guest.seatGroup?.name ?? null}
         />
       </main>
     </div>
