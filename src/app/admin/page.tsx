@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, Users, UtensilsCrossed, Utensils } from "lucide-react";
+import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UserX, Users, UtensilsCrossed, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
@@ -27,7 +27,9 @@ export default async function AdminPage() {
   const meId = meRaw?.sub ?? meRaw?.id ?? null;
 
   const users: UserDto[] = usersRes.ok ? await usersRes.json() : [];
-  const guests = users.filter((u) => u.role === "guest");
+  const allGuests = users.filter((u) => u.role === "guest");
+  const guests = allGuests.filter((u) => !u.unavailable);
+  const unavailableGuests = allGuests.filter((u) => u.unavailable);
   const adminAccounts = users.filter((u) => u.role === "admin" || u.role === "super_admin");
   const seatGroups: SeatGroupDto[] = seatGroupsRes.ok ? await seatGroupsRes.json() : [];
 
@@ -147,6 +149,22 @@ export default async function AdminPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Not attending — invite kept, just moved off the main list */}
+        {unavailableGuests.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserX className="text-primary" /> Not attending ({unavailableGuests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {unavailableGuests.map((u) => (
+                <UserRow key={u.id} user={u} seatGroups={seatGroups} />
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Admin management — super_admin only */}
         {superAdmin && (

@@ -74,6 +74,7 @@ export interface UserDto {
   seatNumber: string | null;
   seatGroup: { id: string; name: string } | null;
   guestNumber: number | null;
+  unavailable: boolean;
   admissionStatus: AdmissionStatus;
   admittedAt: string | null;
   avatarUrl: string | null;

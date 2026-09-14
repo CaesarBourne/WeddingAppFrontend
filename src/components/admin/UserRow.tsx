@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, Loader2, MapPin, ShieldCheck, Trash2, Users } from "lucide-react";
+import { Ban, Loader2, MapPin, ShieldCheck, Trash2, Undo2, UserX, Users } from "lucide-react";
 import { toast } from "sonner";
-import { deleteGuestAction, setGuestSeatGroupAction, togglePhotosBlockedAction } from "@/lib/actions/users";
+import {
+  deleteGuestAction,
+  setGuestSeatGroupAction,
+  setGuestUnavailableAction,
+  togglePhotosBlockedAction,
+} from "@/lib/actions/users";
 import { setSeatNumberAction } from "@/lib/actions/food";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +28,7 @@ export function UserRow({
 }) {
   const [deleting, setDeleting] = useState(false);
   const [togglingBlock, setTogglingBlock] = useState(false);
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
   const [editingSeat, setEditingSeat] = useState(false);
   const [seatValue, setSeatValue] = useState(user.seatNumber ?? "");
   const [savingSeat, setSavingSeat] = useState(false);
@@ -76,6 +82,18 @@ export function UserRow({
     setTogglingBlock(false);
   }
 
+  async function handleToggleAvailability() {
+    setTogglingAvailability(true);
+    const next = !user.unavailable;
+    const result = await setGuestUnavailableAction(user.id, next);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(next ? `${user.name} marked as not attending.` : `${user.name} moved back to the guest list.`);
+    }
+    setTogglingAvailability(false);
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
       <UserAvatar user={user} />
@@ -94,6 +112,7 @@ export function UserRow({
               <Badge variant="outline">Pending</Badge>
             ))}
           {isGuest && user.photosBlocked && <Badge variant="destructive">Gallery blocked</Badge>}
+          {isGuest && user.unavailable && <Badge variant="destructive">Not attending</Badge>}
         </div>
         {user.email && <span className="text-sm text-muted-foreground">{user.email}</span>}
         {isGuest && (
@@ -155,6 +174,28 @@ export function UserRow({
 
       {isGuest && (
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleAvailability}
+            disabled={togglingAvailability}
+            title={
+              user.unavailable
+                ? "Move back to the guest list"
+                : "Mark as not attending — keeps their invite, moves them off the main list"
+            }
+          >
+            {togglingAvailability ? (
+              <Loader2 className="animate-spin" />
+            ) : user.unavailable ? (
+              <Undo2 />
+            ) : (
+              <UserX />
+            )}
+            {user.unavailable ? "Move to guest list" : "Not attending"}
+          </Button>
+
           <Button
             type="button"
             variant="ghost"
