@@ -66,6 +66,23 @@ export async function togglePhotosBlockedAction(
   return {};
 }
 
+export async function setGuestUnavailableAction(
+  guestId: string,
+  unavailable: boolean,
+): Promise<ActionState> {
+  const res = await apiFetch(`/users/guests/${guestId}/unavailable`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ unavailable }),
+  });
+  if (!res.ok) {
+    const err = await parseApiError(res, "Could not update guest.");
+    return { error: err.message };
+  }
+  revalidatePath("/admin");
+  return {};
+}
+
 export async function uploadUserAvatarAction(
   userId: string,
   formData: FormData,
