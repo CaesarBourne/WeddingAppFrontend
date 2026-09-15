@@ -145,7 +145,9 @@ export default async function AdminPage() {
             {guests.length === 0 ? (
               <p className="text-sm text-muted-foreground">No guests yet — create one above.</p>
             ) : (
-              guests.map((u) => <UserRow key={u.id} user={u} seatGroups={seatGroups} />)
+              guests.map((u, i) => (
+                <UserRow key={u.id} user={u} seatGroups={seatGroups} displayNumber={i + 1} />
+              ))
             )}
           </CardContent>
         </Card>
@@ -159,8 +161,8 @@ export default async function AdminPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {unavailableGuests.map((u) => (
-                <UserRow key={u.id} user={u} seatGroups={seatGroups} />
+              {unavailableGuests.map((u, i) => (
+                <UserRow key={u.id} user={u} seatGroups={seatGroups} displayNumber={i + 1} />
               ))}
             </CardContent>
           </Card>
