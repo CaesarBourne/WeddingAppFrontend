@@ -22,9 +22,13 @@ const MAX_GUESTS_PER_SEAT_GROUP = 8;
 export function UserRow({
   user,
   seatGroups,
+  displayNumber,
 }: {
   readonly user: UserDto;
   readonly seatGroups: SeatGroupDto[];
+  /** 1-based position within the list currently being rendered — kept gap-free
+   *  even as guests are deleted or moved to the not-attending list. */
+  readonly displayNumber: number;
 }) {
   const [deleting, setDeleting] = useState(false);
   const [togglingBlock, setTogglingBlock] = useState(false);
@@ -100,9 +104,7 @@ export function UserRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          {isGuest && user.guestNumber != null && (
-            <Badge variant="outline">#{user.guestNumber}</Badge>
-          )}
+          {isGuest && <Badge variant="outline">#{displayNumber}</Badge>}
           <span className="font-medium">{user.name || "—"}</span>
           <Badge variant="secondary">{user.role}</Badge>
           {isGuest &&

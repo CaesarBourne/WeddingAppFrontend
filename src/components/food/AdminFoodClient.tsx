@@ -311,7 +311,7 @@ function GuestStatusSection({
         <p className="text-sm text-muted-foreground">No guests yet.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {sorted.map((g) => {
+          {sorted.map((g, i) => {
             const { eaten, foodName, drinkName } = guestStatus(g, orders);
             return (
               <div
@@ -325,7 +325,7 @@ function GuestStatusSection({
                   )}
                   title={eaten ? "Has eaten" : "Pending"}
                 >
-                  {g.guestNumber ?? "–"}
+                  {i + 1}
                 </span>
                 <span className="font-medium">{g.name ?? "Unnamed guest"}</span>
                 <SeatEditor guest={g} onSeatUpdate={onSeatUpdate} />
