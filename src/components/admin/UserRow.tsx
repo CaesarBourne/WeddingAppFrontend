@@ -17,7 +17,7 @@ import { UserAvatar } from "@/components/admin/UserAvatar";
 import { QrCell } from "@/components/admin/QrCell";
 import type { SeatGroupDto, UserDto } from "@/lib/types";
 
-const MAX_GUESTS_PER_SEAT_GROUP = 8;
+const MAX_GUESTS_PER_SEAT_GROUP = 7;
 
 export function UserRow({
   user,

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SeatGroupDto } from "@/lib/types";
 
-const MAX_GUESTS_PER_SEAT_GROUP = 8;
+const MAX_GUESTS_PER_SEAT_GROUP = 7;
 
 export function SeatGroupsPanel({ seatGroups }: { readonly seatGroups: SeatGroupDto[] }) {
   const [name, setName] = useState("");
