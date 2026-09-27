@@ -51,7 +51,7 @@ export default async function WelcomePage() {
                 {user.seatGroupName && (
                   <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
                     <Users className="size-4" />
-                    {user.seatGroupName}
+                    Seat group: <span className="font-bold">{user.seatGroupName}</span>
                   </p>
                 )}
               </div>
