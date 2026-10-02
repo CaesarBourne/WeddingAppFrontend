@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, LogOut, QrCode, ScanLine, ShieldCheck, ShieldPlus, User, UserX, Users, UtensilsCrossed, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateGuestForm } from "@/components/admin/CreateGuestForm";
 import { CreateAdminForm } from "@/components/admin/CreateAdminForm";
 import { AdminRow } from "@/components/admin/AdminRow";
@@ -74,6 +74,15 @@ export default async function AdminPage() {
             variant="ghost"
             nativeButton={false}
             render={
+              <Link href="/admin/seat-groups">
+                <Users /> Seat Groups
+              </Link>
+            }
+          />
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
               <Link href="/admin/food">
                 <UtensilsCrossed /> Food &amp; Drinks
               </Link>
@@ -128,6 +137,14 @@ export default async function AdminPage() {
             <CardTitle className="flex items-center gap-2">
               <Users className="text-primary" /> Seat groups
             </CardTitle>
+            <CardAction>
+              <Button
+                variant="ghost"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/admin/seat-groups">View full list</Link>}
+              />
+            </CardAction>
           </CardHeader>
           <CardContent>
             <SeatGroupsPanel seatGroups={seatGroups} />
