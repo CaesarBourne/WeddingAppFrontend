@@ -113,7 +113,30 @@ export async function setSeatNumberAction(
     return { error: err.message };
   }
   revalidatePath("/admin");
+  revalidatePath("/admin/seat-groups");
   return {};
+}
+
+/** Assigns consecutive seat numbers (startAt, startAt + 1, …) to guests in the given order. */
+export async function numberSeatsSequentiallyAction(
+  guestIds: string[],
+  startAt: number,
+): Promise<{ error?: string }> {
+  let error: string | undefined;
+  for (const [i, guestId] of guestIds.entries()) {
+    const res = await apiFetch(`/users/guests/${guestId}/seat`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seatNumber: String(startAt + i) }),
+    });
+    if (!res.ok) {
+      error = (await parseApiError(res, "Could not update seat number.")).message;
+      break;
+    }
+  }
+  revalidatePath("/admin");
+  revalidatePath("/admin/seat-groups");
+  return error ? { error } : {};
 }
 
 // ── Admin: all orders ──────────────────────────────────────────────────────

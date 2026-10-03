@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
+import { NumberSeatsButton } from "@/components/admin/NumberSeatsButton";
+import { SeatGroupMemberRow } from "@/components/admin/SeatGroupMemberRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +10,13 @@ import { requireAdmin } from "@/lib/auth";
 import type { SeatGroupDto, UserDto } from "@/lib/types";
 
 const MAX_GUESTS_PER_SEAT_GROUP = 7;
+
+/** Seated guests first in natural order ("2" before "10"), unseated guests last. */
+function bySeatNumber(a: UserDto, b: UserDto) {
+  if (!a.seatNumber) return b.seatNumber ? 1 : 0;
+  if (!b.seatNumber) return -1;
+  return a.seatNumber.localeCompare(b.seatNumber, undefined, { numeric: true });
+}
 
 export default async function SeatGroupsListPage() {
   await requireAdmin();
@@ -33,6 +42,16 @@ export default async function SeatGroupsListPage() {
     }
   }
 
+  // Each group's suggested starting seat continues on from the attending guests in the groups above it.
+  let nextSeat = 1;
+  const groupRows = seatGroups.map((group) => {
+    const members = [...(guestsByGroup.get(group.id) ?? [])].sort(bySeatNumber);
+    const attendingIds = members.filter((m) => !m.unavailable).map((m) => m.id);
+    const defaultStart = nextSeat;
+    nextSeat += attendingIds.length;
+    return { group, members, attendingIds, defaultStart };
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-4 border-b p-4">
@@ -56,8 +75,7 @@ export default async function SeatGroupsListPage() {
             No seat groups yet — create one from the guest list.
           </p>
         ) : (
-          seatGroups.map((group) => {
-            const members = guestsByGroup.get(group.id) ?? [];
+          groupRows.map(({ group, members, attendingIds, defaultStart }) => {
             const isFull = members.length >= MAX_GUESTS_PER_SEAT_GROUP;
             return (
               <Card key={group.id}>
@@ -76,25 +94,18 @@ export default async function SeatGroupsListPage() {
                   {members.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No guests assigned yet.</p>
                   ) : (
-                    <ul className="flex flex-col gap-2">
-                      {members.map((m) => (
-                        <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                          <span className="font-medium">
-                            {m.name || "—"}
-                            {m.unavailable && (
-                              <Badge variant="destructive" className="ml-2">
-                                Not attending
-                              </Badge>
-                            )}
-                          </span>
-                          {m.seatNumber && (
-                            <span className="inline-flex items-center gap-1 text-muted-foreground">
-                              <MapPin className="size-3.5" /> Seat {m.seatNumber}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex flex-col gap-3">
+                      <ul className="flex flex-col gap-2">
+                        {members.map((m) => (
+                          <SeatGroupMemberRow key={m.id} member={m} />
+                        ))}
+                      </ul>
+                      <NumberSeatsButton
+                        groupName={group.name}
+                        guestIds={attendingIds}
+                        defaultStart={defaultStart}
+                      />
+                    </div>
                   )}
                 </CardContent>
               </Card>
